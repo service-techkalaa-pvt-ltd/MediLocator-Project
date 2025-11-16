@@ -1,0 +1,525 @@
+<!-- Floating Chatbot Widget -->
+<div id="chatbot-widget" class="chatbot-widget-container">
+  <!-- Floating Button -->
+  <button id="chatbot-toggle-btn" class="chatbot-float-btn" title="Chat with MediBot">
+    <i class="fas fa-comments"></i>
+  </button>
+
+  <!-- Chat Window -->
+  <div id="chatbot-window" class="chatbot-window">
+    <!-- Header -->
+    <div class="chatbot-window-header">
+      <div class="chatbot-header-info">
+        <i class="fas fa-robot"></i>
+        <div>
+          <h3>MediBot</h3>
+          <p class="status-online"><span class="status-dot"></span>Online</p>
+        </div>
+      </div>
+      <button id="chatbot-close-btn" class="chatbot-close-btn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Messages Area -->
+    <div id="chatbot-messages" class="chatbot-messages">
+      <div class="chatbot-message bot">
+        <div class="message-avatar">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div class="message-content">
+          <p><strong>MediBot:</strong> Hello! 👋 I'm MediBot, your AI health assistant. How can I help you today?</p>
+          <p class="message-hint">Try asking: "How do I upload a prescription?" or "Find pharmacies near me"</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="chatbot-quick-actions">
+      <button class="quick-action-btn" onclick="sendChatbotMessage('How do I upload my prescription?')">
+        <i class="fas fa-file-upload"></i> Upload Prescription
+      </button>
+      <button class="quick-action-btn" onclick="sendChatbotMessage('Find pharmacies near me')">
+        <i class="fas fa-map-marker-alt"></i> Find Pharmacies
+      </button>
+      <button class="quick-action-btn" onclick="sendChatbotMessage('How do I search for medicines?')">
+        <i class="fas fa-search"></i> Search Medicines
+      </button>
+      <button class="quick-action-btn" onclick="sendChatbotMessage('Help me with login')">
+        <i class="fas fa-sign-in-alt"></i> Login Help
+      </button>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chatbot-input-area">
+      <input 
+        type="text" 
+        id="chatbot-input" 
+        class="chatbot-input" 
+        placeholder="Type your question..."
+        onkeypress="handleChatbotKeyPress(event)"
+      >
+      <button id="chatbot-send-btn" class="chatbot-send-btn" onclick="sendChatbotMessage()">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Chatbot Widget Styles */
+  .chatbot-widget-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    z-index: 9999;
+  }
+
+  /* Floating Button */
+  .chatbot-float-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    animation: pulse-chatbot 2s infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @keyframes pulse-chatbot {
+    0%, 100% { 
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    }
+    50% { 
+      box-shadow: 0 4px 30px rgba(102, 126, 234, 0.6);
+      transform: scale(1.05);
+    }
+  }
+
+  .chatbot-float-btn:hover {
+    transform: scale(1.15);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+  }
+
+  .chatbot-float-btn.hidden {
+    display: none;
+  }
+
+  /* Chat Window */
+  .chatbot-window {
+    position: absolute;
+    bottom: 90px;
+    right: 0;
+    width: 380px;
+    height: 600px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+  }
+
+  .chatbot-window.active {
+    display: flex;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Header */
+  .chatbot-window-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chatbot-header-info {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .chatbot-header-info i {
+    font-size: 1.8rem;
+  }
+
+  .chatbot-header-info h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .status-online {
+    margin: 0;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    opacity: 0.9;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .chatbot-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .chatbot-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Messages Area */
+  .chatbot-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: #f8f9fa;
+  }
+
+  .chatbot-messages::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .chatbot-messages::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .chatbot-messages::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+
+  .chatbot-message {
+    display: flex;
+    margin-bottom: 1.2rem;
+    animation: fadeInMessage 0.3s ease;
+  }
+
+  @keyframes fadeInMessage {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .chatbot-message.user {
+    justify-content: flex-end;
+  }
+
+  .message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .chatbot-message.user .message-avatar {
+    background: linear-gradient(135deg, #10b981, #059669);
+    order: 2;
+  }
+
+  .message-content {
+    margin-left: 0.8rem;
+    max-width: 70%;
+  }
+
+  .chatbot-message.user .message-content {
+    margin-left: 0;
+    margin-right: 0.8rem;
+    order: 1;
+  }
+
+  .message-content p {
+    margin: 0;
+    padding: 0.8rem 1rem;
+    background: white;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.4;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .chatbot-message.user .message-content p {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+
+  .message-hint {
+    font-size: 0.85rem;
+    color: #666;
+    opacity: 0.8;
+    margin-top: 0.5rem !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  /* Quick Actions */
+  .chatbot-quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    padding: 1rem;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+    max-height: 140px;
+    overflow-y: auto;
+  }
+
+  .quick-action-btn {
+    padding: 0.6rem 0.8rem;
+    background: #f0f0f0;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    color: #333;
+  }
+
+  .quick-action-btn:hover {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+  }
+
+  .quick-action-btn i {
+    font-size: 1rem;
+  }
+
+  /* Input Area */
+  .chatbot-input-area {
+    display: flex;
+    gap: 0.8rem;
+    padding: 1rem;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .chatbot-input {
+    flex: 1;
+    border: 2px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 0.8rem 1.2rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.3s;
+  }
+
+  .chatbot-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .chatbot-send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  .chatbot-send-btn:hover {
+    transform: scale(1.1);
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .chatbot-window {
+      width: calc(100vw - 20px);
+      height: 70vh;
+      bottom: 90px;
+      right: 10px;
+    }
+
+    .chatbot-quick-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // Chatbot Widget JS
+  const chatbotToggleBtn = document.getElementById('chatbot-toggle-btn');
+  const chatbotCloseBtn = document.getElementById('chatbot-close-btn');
+  const chatbotWindow = document.getElementById('chatbot-window');
+  const chatbotInput = document.getElementById('chatbot-input');
+  const chatbotMessages = document.getElementById('chatbot-messages');
+
+  // Toggle chat window
+  chatbotToggleBtn.addEventListener('click', () => {
+    chatbotWindow.classList.toggle('active');
+    if (chatbotWindow.classList.contains('active')) {
+      chatbotInput.focus();
+    }
+  });
+
+  // Close chat window
+  chatbotCloseBtn.addEventListener('click', () => {
+    chatbotWindow.classList.remove('active');
+  });
+
+  // Handle key press
+  function handleChatbotKeyPress(event) {
+    if (event.key === 'Enter') {
+      sendChatbotMessage();
+    }
+  }
+
+  // Send message
+  function sendChatbotMessage(message = null) {
+    const text = message || chatbotInput.value.trim();
+    if (!text) return;
+
+    // Add user message
+    addChatbotMessage(text, 'user');
+    chatbotInput.value = '';
+
+    // Simulate bot thinking
+    setTimeout(() => {
+      const response = getAIResponse(text);
+      addChatbotMessage(response, 'bot');
+      chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }, 800);
+  }
+
+  // Add message to chat
+  function addChatbotMessage(text, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chatbot-message ${sender}`;
+    
+    if (sender === 'bot') {
+      messageDiv.innerHTML = `
+        <div class="message-avatar">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div class="message-content">
+          <p><strong>MediBot:</strong> ${text}</p>
+        </div>
+      `;
+    } else {
+      messageDiv.innerHTML = `
+        <div class="message-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="message-content">
+          <p><strong>You:</strong> ${text}</p>
+        </div>
+      `;
+    }
+    
+    chatbotMessages.appendChild(messageDiv);
+    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+  }
+
+  // Smart NLP Response Generator
+  function getAIResponse(userMessage) {
+    const msg = userMessage.toLowerCase().trim();
+
+    // Prescription Upload
+    if (msg.includes('upload') || msg.includes('prescription')) {
+      return `📋 To upload your prescription:\n1. Click the "Prescription Scanner" in the navigation\n2. Either drag & drop your file or click the upload area\n3. Alternatively, click "Take Photo with Camera" to capture a photo\n4. Click "Upload & Scan Prescription" button\n5. Our AI will analyze it instantly!`;
+    }
+
+    // Pharmacy Search & Location
+    if (msg.includes('pharmacy') || msg.includes('pharmacies') || msg.includes('near me')) {
+      return `📍 Finding Pharmacies:\n1. Use the search bar on the home page\n2. Enter your location (or use "Get Location" for current location)\n3. Search for the medicine you need\n4. We'll show you all nearby pharmacies with availability\n💡 Pro tip: Allow location access for faster results!`;
+    }
+
+    // Medicine Search
+    if (msg.includes('search') || msg.includes('medicine') || msg.includes('medicine')) {
+      return `🔍 How to Search for Medicines:\n1. Go to the home page\n2. Enter the medicine name in the search bar\n3. Select your location\n4. Press Enter or click Search\n5. View results with availability\n✨ You can also use voice search!`;
+    }
+
+    // Login Help
+    if (msg.includes('login') || msg.includes('signin') || msg.includes('account') || msg.includes('register')) {
+      return `🔐 Login & Account Help:\n1. Click "Login" in the top navigation\n2. Enter your email and password\n3. Don't have an account? Click "Register"\n4. Fill in your details and create an account\n5. Enjoy personalized features and saved searches!\n📧 Forgot password? Use the "Forgot Password" link on login page`;
+    }
+
+    // Amoxicillin or medicine info
+    if (msg.includes('amoxicillin') || msg.includes('paracetamol') || msg.includes('aspirin') || msg.includes('medicine')) {
+      const medicineName = msg.match(/amoxicillin|paracetamol|aspirin|ibuprofen|metformin/i)?.[0] || 'this medicine';
+      return `💊 Medicine Information:\n${medicineName.charAt(0).toUpperCase() + medicineName.slice(1)} is a commonly used medication.\n\n⚠️ For detailed information:\n1. Search for "${medicineName}" on our platform\n2. View availability at nearby pharmacies\n3. Check real-time stock information\n4. Consult with pharmacists for usage guidelines\n\n📞 Always consult your doctor before taking new medicines!`;
+    }
+
+    // General website help
+    if (msg.includes('how') || msg.includes('help') || msg.includes('feature') || msg.includes('what')) {
+      return `🏥 MediLocator Features:\n✅ Medicine Search - Find medicines by name\n✅ Pharmacy Locator - Locate pharmacies near you\n✅ Prescription Scanner - Upload prescriptions for instant analysis\n✅ Availability Check - Real-time stock availability\n\nWhich feature would you like help with?`;
+    }
+
+    // About us
+    if (msg.includes('about') || msg.includes('medilocator') || msg.includes('who are you')) {
+      return `🏥 About MediLocator:\nMediLocator is your trusted platform for finding medicines quickly and easily across India.\n\n🎯 Our Mission:\n• Help you locate medicines near you\n• Find pharmacies with available stock\n• Save time with our AI-powered prescription scanner\n• Provide reliable healthcare solutions\n\n🌍 Available in major cities across India!`;
+    }
+
+    // Default response
+    return `😊 I understand you're asking about "${userMessage}".\n\nHere are some things I can help with:\n• 📋 Upload prescriptions\n• 🔍 Search for medicines\n• 📍 Find nearby pharmacies\n• 💊 Medicine information\n• 🔐 Account & login help\n\nTry asking something like: "How do I upload my prescription?" or "Find pharmacies near me"`;
+  }
+</script>

@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prescription Scanner - MediLocator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1E40AF 0%, #7C3AED 50%, #06B6D4 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Premium hexagon pattern */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        repeating-linear-gradient(60deg, transparent, transparent 50px, rgba(255,255,255,0.05) 50px, rgba(255,255,255,0.05) 52px),
+        repeating-linear-gradient(120deg, transparent, transparent 50px, rgba(255,255,255,0.05) 50px, rgba(255,255,255,0.05) 52px),
+        repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.05) 50px, rgba(255,255,255,0.05) 52px);
+      animation: slidePattern 25s linear infinite;
+    }
+
+    @keyframes slidePattern {
+      0% { background-position: 0 0; }
+      100% { background-position: 100px 100px; }
+    }
+
+    /* Navigation */
+    nav {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1E40AF, #7C3AED);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #4a5568;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover {
+      background: linear-gradient(135deg, #1E40AF, #7C3AED);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .btn-primary {
+      background: #1E40AF;
+      color: white !important;
+      padding: 0.7rem 1.8rem;
+      border-radius: 25px;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: #7C3AED;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Main Container */
+    .container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .upload-section {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      animation: fadeInUp 1s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      color: white;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1.2rem;
+      margin-bottom: 3rem;
+    }
+
+    /* Upload Card */
+    .upload-card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 3rem;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+      animation: slideIn 0.8s ease;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .upload-box {
+      border: 3px dashed #cbd5e0;
+      border-radius: 22px;
+      padding: 4rem 2rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-box:hover {
+      border-color: #1E40AF;
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
+    }
+
+    .upload-box.dragover {
+      border-color: #7C3AED;
+      background: #a7f3d0;
+      transform: scale(1.02);
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .upload-icon {
+      font-size: 5rem;
+      background: linear-gradient(135deg, #1E40AF, #7C3AED);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1.5rem;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .upload-box p {
+      color: #4a5568;
+      font-size: 1.1rem;
+      margin: 0.8rem 0;
+    }
+
+    .upload-box p strong {
+      color: #2d3748;
+      font-size: 1.2rem;
+    }
+
+    .file-types {
+      font-size: 0.9rem;
+      color: #a0aec0;
+      margin-top: 1rem;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Camera Button */
+    .camera-btn {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .camera-btn:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .camera-btn i {
+      font-size: 1.2rem;
+    }
+
+    /* Divider */
+    .upload-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 1.5rem 0;
+      color: #718096;
+      font-weight: 500;
+    }
+
+    .upload-divider::before,
+    .upload-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .upload-divider span {
+      padding: 0 1rem;
+    }
+
+    /* Camera Modal */
+    .camera-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .camera-modal.active {
+      display: flex;
+    }
+
+    .camera-container {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 800px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .camera-container h2 {
+      color: #2d3748;
+      margin-bottom: 1.5rem;
+    }
+
+    #camera-video {
+      width: 100%;
+      max-width: 640px;
+      max-height: 480px;
+      border-radius: 15px;
+      background: #000;
+      object-fit: cover;
+    }
+
+    #camera-canvas {
+      width: 100%;
+      max-width: 640px;
+      max-height: 480px;
+      border-radius: 15px;
+      display: none;
+    }
+
+    #camera-canvas.show {
+      display: block;
+    }
+
+    .camera-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .capture-btn {
+      background: linear-gradient(135deg, #1E40AF, #7C3AED);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .capture-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+
+    .close-camera-btn, .retake-btn, .use-photo-btn {
+      background: #e2e8f0;
+      color: #2d3748;
+      border: none;
+      border-radius: 12px;
+      padding: 0.8rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .close-camera-btn:hover, .retake-btn:hover {
+      background: #cbd5e0;
+    }
+
+    .use-photo-btn {
+      background: linear-gradient(135deg, #1E40AF, #7C3AED);
+      color: white;
+    }
+
+    .use-photo-btn:hover {
+      background: linear-gradient(135deg, #7C3AED, #06B6D4);
+    }
+
+    
+
+    /* Preview Section */
+    .preview-section {
+      margin-top: 2rem;
+      display: none;
+    }
+
+    .preview-section.active {
+      display: block;
+      animation: fadeIn 0.5s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .preview-card {
+      background: #f7fafc;
+      border-radius: 15px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .preview-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 2px solid #e2e8f0;
+    }
+
+    .preview-details {
+      flex: 1;
+      text-align: left;
+    }
+
+    .preview-details h3 {
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .preview-details p {
+      color: #718096;
+      font-size: 0.9rem;
+      margin: 0.3rem 0;
+    }
+
+    .remove-btn {
+      background: #fc8181;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1.2rem;
+    }
+
+    .remove-btn:hover {
+      background: #f56565;
+      transform: scale(1.1);
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 1.2rem;
+      background: linear-gradient(135deg, #1E40AF, #7C3AED);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .submit-btn:hover::before {
+      left: 100%;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 45px rgba(16, 185, 129, 0.6);
+    }
+
+    /* Features Grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      padding: 1.8rem;
+      border-radius: 18px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: center;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 50px rgba(16, 185, 129, 0.3);
+    }
+
+    .feature-card i {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #1E40AF, #7C3AED);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .feature-card h3 {
+      font-size: 1.1rem;
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: #718096;
+      margin: 0;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      display: none;
+      margin-top: 2rem;
+    }
+
+    .progress-container.active {
+      display: block;
+    }
+
+    .progress-bar {
+      background: #e2e8f0;
+      height: 8px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, #48bb78, #38a169);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+      border-radius: 10px;
+    }
+
+    .progress-text {
+      color: #4a5568;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    /* Spinner */
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid white;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .submit-btn.loading .spinner {
+      display: inline-block;
+    }
+
+    .submit-btn.loading .btn-text {
+      display: none;
+    }
+
+    /* Footer */
+    .footer {
+      background: #2d3748;
+      color: white;
+      padding: 3rem 2rem 2rem;
+      margin-top: 4rem;
+    }
+
+    .footer-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 3rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-section h3 {
+      margin-bottom: 1rem;
+      color: #10b981;
+    }
+
+    .footer-section a {
+      display: block;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      margin-bottom: 0.5rem;
+      transition: color 0.3s;
+    }
+
+    .footer-section a:hover {
+      color: #10b981;
+    }
+
+    .footer-section p {
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      nav {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .nav-links {
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .subtitle {
+        font-size: 1rem;
+      }
+
+      .upload-card {
+        padding: 2rem 1.5rem;
+      }
+
+      .upload-box {
+        padding: 3rem 1.5rem;
+      }
+
+      .preview-card {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .preview-details {
+        text-align: center;
+      }
+
+      .features {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+
+      .feature-card {
+        padding: 1.5rem 1rem;
+      }
+
+      .feature-card i {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="logo">
+      <i class="fas fa-pills"></i>
+      <span>MediLocator</span>
+    </div>
+    <div class="nav-links">
+      <a href="{% url 'home' %}"><i class="fas fa-home"></i> Home</a>
+      <a href="{% url 'about_us' %}"><i class="fas fa-info-circle"></i> About</a>
+      <a href="{% url 'prescription_scanner' %}"><i class="fas fa-file-prescription"></i> Prescription Scanner</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'logout' %}" class="btn-primary"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="upload-section">
+      <h1><i class="fas fa-file-prescription"></i> Prescription Scanner</h1>
+      <p class="subtitle">Upload your prescription to identify medicines instantly with AI</p>
+
+      <div class="upload-card">
+        <form method="POST" enctype="multipart/form-data" id="upload-form">
+          {% csrf_token %}
+          
+          <!-- Upload Box -->
+          <label for="prescription-file">
+            <div class="upload-box" id="upload-box">
+              <div class="upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+              </div>
+              <p><strong>Click to upload prescription</strong></p>
+              <p>or drag and drop here</p>
+              <p class="file-types">
+                <i class="fas fa-file-image"></i> Supports: JPG, PNG, PDF (Max 5MB)
+              </p>
+            </div>
+          </label>
+          <input type="file" id="prescription-file" name="document" accept="image/*,.pdf" required>
+          
+          <!-- Divider -->
+          <div class="upload-divider">
+            <span>OR</span>
+          </div>
+          
+          <!-- Camera Button -->
+          <button type="button" class="camera-btn" onclick="openCamera()">
+            <i class="fas fa-camera"></i>
+            Take Photo with Camera
+          </button>
+
+          <!-- Preview Section -->
+          <div class="preview-section" id="preview-section">
+            <div class="preview-card" id="preview-card">
+              <img id="preview-image" class="preview-image" src="" alt="Preview">
+              <div class="preview-details">
+                <h3 id="file-name">prescription.jpg</h3>
+                <p><i class="fas fa-file"></i> <span id="file-size">0 KB</span></p>
+                <p><i class="fas fa-calendar"></i> <span id="file-date">Today</span></p>
+              </div>
+              <button type="button" class="remove-btn" onclick="removeFile()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-container" id="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p class="progress-text" id="progress-text">Processing...</p>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="submit-btn" id="submit-btn" disabled>
+            <span class="btn-text">
+              <i class="fas fa-paper-plane"></i>
+              Upload & Scan Prescription
+            </span>
+            <div class="spinner"></div>
+          </button>
+        </form>
+      </div>
+
+      <!-- Features -->
+      <div class="features">
+        <div class="feature-card">
+          <i class="fas fa-robot"></i>
+          <h3>AI Powered</h3>
+          <p>Advanced OCR technology</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-bolt"></i>
+          <h3>Instant Results</h3>
+          <p>Get medicines in seconds</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-shield-alt"></i>
+          <h3>Secure</h3>
+          <p>Your data is protected</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-check-circle"></i>
+          <h3>Accurate</h3>
+          <p>99% recognition rate</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Camera Modal -->
+  <div class="camera-modal" id="camera-modal">
+    <div class="camera-container">
+      <h2><i class="fas fa-camera"></i> Capture Prescription Photo</h2>
+      <video id="camera-video" autoplay playsinline></video>
+      <canvas id="camera-canvas"></canvas>
+      <div class="camera-controls">
+        <button type="button" class="close-camera-btn" onclick="closeCamera()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="capture-btn" id="capture-btn" onclick="capturePhoto()">
+          <i class="fas fa-camera"></i>
+        </button>
+        <button type="button" class="retake-btn" id="retake-btn" style="display: none;" onclick="retakePhoto()">
+          <i class="fas fa-redo"></i> Retake
+        </button>
+        <button type="button" class="use-photo-btn" id="use-photo-btn" style="display: none;" onclick="usePhoto()">
+          <i class="fas fa-check"></i> Use This Photo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const uploadBox = document.getElementById('upload-box');
+    const fileInput = document.getElementById('prescription-file');
+    const previewSection = document.getElementById('preview-section');
+    const previewImage = document.getElementById('preview-image');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const fileDate = document.getElementById('file-date');
+    const submitBtn = document.getElementById('submit-btn');
+    const uploadForm = document.getElementById('upload-form');
+    const progressContainer = document.getElementById('progress-container');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+
+    // Drag and drop
+    uploadBox.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadBox.classList.add('dragover');
+    });
+
+    uploadBox.addEventListener('dragleave', () => {
+      uploadBox.classList.remove('dragover');
+    });
+
+    uploadBox.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadBox.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        handleFileSelect(files[0]);
+      }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFileSelect(e.target.files[0]);
+      }
+    });
+
+    // Handle file selection
+    function handleFileSelect(file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!validTypes.includes(file.type)) {
+        alert('Please upload a valid image (JPG, PNG) or PDF file');
+        return;
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (file.type === 'application/pdf') {
+          previewImage.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50">📄</text></svg>';
+        } else {
+          previewImage.src = e.target.result;
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // Update file details
+      fileName.textContent = file.name;
+      fileSize.textContent = (file.size / 1024).toFixed(2) + ' KB';
+      fileDate.textContent = new Date().toLocaleDateString();
+
+      // Show preview and enable submit
+      previewSection.classList.add('active');
+      submitBtn.disabled = false;
+    }
+
+    // Remove file
+    function removeFile() {
+      fileInput.value = '';
+      previewSection.classList.remove('active');
+      submitBtn.disabled = true;
+    }
+
+    // Form submission
+    uploadForm.addEventListener('submit', function(e) {
+      submitBtn.classList.add('loading');
+      submitBtn.disabled = true;
+      
+      // Show progress
+      progressContainer.classList.add('active');
+      
+      // Simulate progress (replace with actual upload progress if using AJAX)
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        progressFill.style.width = progress + '%';
+        progressText.textContent = `Processing... ${progress}%`;
+        
+        if (progress >= 90) {
+          clearInterval(interval);
+          progressText.textContent = 'Analyzing prescription...';
+        }
+      }, 300);
+    });
+
+    // ==================== CAMERA FUNCTIONALITY ====================
+    let cameraStream = null;
+    let capturedImageBlob = null;
+
+    // Open Camera
+    async function openCamera() {
+      const modal = document.getElementById('camera-modal');
+      const video = document.getElementById('camera-video');
+      const captureBtn = document.getElementById('capture-btn');
+      const retakeBtn = document.getElementById('retake-btn');
+      const usePhotoBtn = document.getElementById('use-photo-btn');
+
+      try {
+        // Request camera access
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment', // Use back camera on mobile
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          } 
+        });
+        
+        video.srcObject = cameraStream;
+        modal.classList.add('active');
+        
+        // Reset buttons
+        captureBtn.style.display = 'block';
+        retakeBtn.style.display = 'none';
+        usePhotoBtn.style.display = 'none';
+        video.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        alert('Unable to access camera. Please check permissions or try uploading a file instead.');
+      }
+    }
+
+    // Close Camera
+    function closeCamera() {
+      const modal = document.getElementById('camera-modal');
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      const captureBtn = document.getElementById('capture-btn');
+      const retakeBtn = document.getElementById('retake-btn');
+      const usePhotoBtn = document.getElementById('use-photo-btn');
+      
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      
+      modal.classList.remove('active');
+      video.srcObject = null;
+      video.style.display = 'block';
+      canvas.classList.remove('show');
+      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Reset buttons
+      captureBtn.style.display = 'block';
+      retakeBtn.style.display = 'none';
+      usePhotoBtn.style.display = 'none';
+      
+      capturedImageBlob = null;
+    }
+
+    // Capture Photo
+    function capturePhoto() {
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      const captureBtn = document.getElementById('capture-btn');
+      const retakeBtn = document.getElementById('retake-btn');
+      const usePhotoBtn = document.getElementById('use-photo-btn');
+      
+      // Set canvas size to fixed dimensions
+      canvas.width = 1920;
+      canvas.height = 1080;
+      
+      // Draw video frame to canvas (centered and cropped if needed)
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert canvas to blob
+      canvas.toBlob((blob) => {
+        capturedImageBlob = blob;
+        
+        // Hide video, show canvas with captured image
+        video.style.display = 'none';
+        canvas.classList.add('show');
+        
+        // Update buttons
+        captureBtn.style.display = 'none';
+        retakeBtn.style.display = 'inline-block';
+        usePhotoBtn.style.display = 'inline-block';
+        
+        // Stop camera stream
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          cameraStream = null;
+        }
+      }, 'image/jpeg', 0.95);
+    }
+
+    // Retake Photo
+    async function retakePhoto() {
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      const captureBtn = document.getElementById('capture-btn');
+      const retakeBtn = document.getElementById('retake-btn');
+      const usePhotoBtn = document.getElementById('use-photo-btn');
+      
+      try {
+        // Clear canvas
+        canvas.classList.remove('show');
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Restart camera
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          } 
+        });
+        
+        video.srcObject = cameraStream;
+        video.style.display = 'block';
+        
+        // Update buttons
+        captureBtn.style.display = 'block';
+        retakeBtn.style.display = 'none';
+        usePhotoBtn.style.display = 'none';
+        
+        capturedImageBlob = null;
+      } catch (error) {
+        console.error('Error restarting camera:', error);
+        alert('Unable to restart camera.');
+      }
+    }
+
+    // Use Captured Photo
+    function usePhoto() {
+      if (!capturedImageBlob) {
+        alert('No photo captured!');
+        return;
+      }
+      
+      // Create a File object from blob
+      const file = new File([capturedImageBlob], 'prescription-photo.jpg', { type: 'image/jpeg' });
+      
+      // Create a DataTransfer to set the file input
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+      
+      // Handle the file (show preview, enable submit)
+      handleFileSelect(file);
+      
+      // Close camera modal
+      closeCamera();
+    }
+  </script>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>🏥 MediLocator</h3>
+        <p>Your trusted partner in finding medicines quickly and easily across India.</p>
+      </div>
+      
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'about_us' %}">About Us</a>
+        <a href="{% url 'feedback' %}">Feedback</a>
+        {% if not user.is_authenticated %}
+          <a href="{% url 'login' %}">Login</a>
+          <a href="{% url 'register' %}">Register</a>
+        {% endif %}
+      </div>
+      
+      <div class="footer-section">
+        <h3>Services</h3>
+        <a href="#">Medicine Search</a>
+        <a href="#">Pharmacy Locator</a>
+        <a href="{% url 'prescription_scanner' %}">Prescription Upload</a>
+      </div>
+      
+      <div class="footer-section">
+        <h3>Contact</h3>
+        <a href="mailto:support@medilocator.com">support@medilocator.com</a>
+        <a href="tel:+919240250346">+91 9240250346</a>
+        <a href="#">Mumbai, Maharashtra</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 MediLocator. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Floating Chatbot Widget -->
+  {% include 'accounts/chatbot_widget.html' %}
+
+</body>
+</html>

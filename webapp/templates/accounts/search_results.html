@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - MediLocator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            color: #0f172a;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 50%, #06b6d4 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 2rem;
+            transition: opacity 0.3s;
+        }
+
+        .navbar-links a:hover {
+            opacity: 0.8;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .search-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .search-header h2 {
+            color: #1e40af;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .medicine-search-box {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .medicine-search-box input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .medicine-search-box input:focus {
+            outline: none;
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .medicine-search-box button {
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .medicine-search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .clear-btn {
+            padding: 0.75rem 1.5rem;
+            background: #64748b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .clear-btn:hover {
+            background: #475569;
+        }
+
+        .results-count {
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 1rem;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .pharmacy-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+
+        .pharmacy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.15);
+        }
+
+        .pharmacy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .pharmacy-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e40af;
+            flex: 1;
+        }
+
+        .pharmacy-rating {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .pharmacy-info {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .pharmacy-info i {
+            width: 20px;
+            color: #1e40af;
+        }
+
+        .medicines-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .medicines-title {
+            font-size: 0.9rem;
+            color: #475569;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .medicines-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .medicine-tag {
+            background: #f0f4ff;
+            color: #1e40af;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            border: 1px solid #d0deff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: #475569;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #94a3b8;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: #64748b;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <h1><i class="fas fa-pills"></i> MediLocator</h1>
+            <div class="navbar-links">
+                <a href="/"><i class="fas fa-home"></i> Home</a>
+                <a href="/about"><i class="fas fa-info-circle"></i> About</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Search Header -->
+        <div class="search-header">
+            <h2 id="pageTitle">Search Results</h2>
+            <p id="searchInfo" style="color: #64748b; margin-top: 0.5rem;"></p>
+            
+            <!-- Medicine Search Box (shown after city results load) -->
+            <div id="medicineSearchBox" class="medicine-search-box" style="display: none;">
+                <input 
+                    type="text" 
+                    id="medicineInput" 
+                    placeholder="Search for a medicine (e.g., Paracetamol, Aspirin)..."
+                />
+                <button onclick="searchMedicine()">
+                    <i class="fas fa-search"></i> Search Medicine
+                </button>
+                <button class="clear-btn" onclick="clearMedicineSearch()">
+                    <i class="fas fa-times"></i> Show All
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Count -->
+        <div class="results-count" id="resultsCount">
+            <i class="fas fa-store"></i> Loading...
+        </div>
+
+        <!-- Results Container -->
+        <div id="resultsContainer" class="results-container">
+            <div class="loading">
+                <i class="fas fa-spinner"></i><br>
+                Loading pharmacies...
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-search"></i>
+            <h3>No Pharmacies Found</h3>
+            <p id="emptyMessage">Try adjusting your search criteria.</p>
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Search
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let currentCity = '';
+        let currentMedicine = '';
+        let allPharmacies = [];
+        let userLocation = null; // Store user's GPS coordinates
+
+        // Get URL parameter
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Calculate distance between two coordinates using Haversine formula (in KM)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c;
+            return distance.toFixed(2); // Return distance in KM with 2 decimal places
+        }
+
+        // Request user's location
+        function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            userLocation = {
+                                lat: position.coords.latitude,
+                                lon: position.coords.longitude
+                            };
+                            console.log('User location obtained:', userLocation);
+                            resolve(userLocation);
+                        },
+                        error => {
+                            console.warn('Location access denied or unavailable:', error);
+                            resolve(null); // Continue without location
+                        }
+                    );
+                } else {
+                    console.warn('Geolocation not supported');
+                    resolve(null);
+                }
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            currentCity = getUrlParameter('city') || '';
+            const mode = getUrlParameter('mode') || '';
+            
+            console.log('Page initialized:', { city: currentCity, mode: mode });
+            
+            // Request user's location first
+            getUserLocation().then(() => {
+                if (mode === 'city' && currentCity) {
+                    document.getElementById('pageTitle').textContent = `Pharmacies in ${currentCity.toUpperCase()}`;
+                    document.getElementById('searchInfo').textContent = `Showing all pharmacy stores in ${currentCity}`;
+                    loadCityPharmacies(currentCity);
+                } else {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('resultsContainer').style.display = 'none';
+                    document.getElementById('emptyMessage').textContent = 'Invalid search parameters. Please search from the home page.';
+                }
+            });
+        });
+
+        // Load all pharmacies in a city
+        function loadCityPharmacies(city, medicine = '') {
+            let url = `/api/search-by-city/?city=${encodeURIComponent(city)}&sort=rating`;
+            if (medicine) {
+                url += `&medicine=${encodeURIComponent(medicine)}`;
+            }
+            
+            console.log('Fetching:', url);
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('API Response:', data);
+                    
+                    if (data.success && data.pharmacies && data.pharmacies.length > 0) {
+                        allPharmacies = data.pharmacies;
+                        displayPharmacies(data.pharmacies);
+                        
+                        // Update count
+                        const count = data.pharmacies.length;
+                        if (medicine) {
+                            document.getElementById('resultsCount').innerHTML = 
+                                `<i class="fas fa-store"></i> ${count} pharmacy store${count !== 1 ? 's' : ''} in ${city.toUpperCase()} with "${medicine}"`;
+                        } else {
+                            document.getElementById('resultsCount').innerHTML = 
+                                `<i class="fas fa-store"></i> ${count} pharmacy store${count !== 1 ? 's' : ''} found in ${city.toUpperCase()}`;
+                        }
+                        
+                        // Show medicine search box after results load
+                        document.getElementById('medicineSearchBox').style.display = 'flex';
+                        document.getElementById('emptyState').style.display = 'none';
+                    } else {
+                        // No pharmacies found
+                        document.getElementById('resultsContainer').innerHTML = '';
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('resultsCount').innerHTML = 
+                            `<i class="fas fa-store"></i> 0 pharmacy stores found`;
+                        
+                        if (medicine) {
+                            document.getElementById('emptyMessage').textContent = 
+                                `No pharmacies in ${city} have "${medicine}". Try a different medicine or clear the search.`;
+                        } else {
+                            document.getElementById('emptyMessage').textContent = 
+                                `No pharmacies found in ${city}.`;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('resultsCount').innerHTML = 
+                        `<i class="fas fa-exclamation-triangle"></i> Error loading pharmacies`;
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('emptyMessage').textContent = 
+                        'Failed to load pharmacies. Please try again.';
+                });
+        }
+
+        // Display pharmacies
+        function displayPharmacies(pharmacies) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            
+            pharmacies.forEach(pharmacy => {
+                const card = document.createElement('div');
+                card.className = 'pharmacy-card';
+                
+                // Calculate distance if user location is available
+                let distanceHtml = '';
+                if (userLocation && pharmacy.latitude && pharmacy.longitude) {
+                    const distance = calculateDistance(
+                        userLocation.lat, 
+                        userLocation.lon, 
+                        pharmacy.latitude, 
+                        pharmacy.longitude
+                    );
+                    distanceHtml = `<div style="color: #06b6d4; font-weight: 600; margin-top: 0.5rem;"><i class="fas fa-route"></i> ${distance} km from your location</div>`;
+                }
+                
+                // Medicines HTML
+                let medicinesHtml = '';
+                if (pharmacy.available_medicines && pharmacy.available_medicines.length > 0) {
+                    medicinesHtml = `
+                        <div class="medicines-section">
+                            <div class="medicines-title">
+                                <i class="fas fa-pills"></i> Available Medicines (${pharmacy.total_medicines})
+                            </div>
+                            <div class="medicines-list">
+                                ${pharmacy.available_medicines.map(med => 
+                                    `<span class="medicine-tag">${med.name}</span>`
+                                ).join('')}
+                                ${pharmacy.total_medicines > pharmacy.available_medicines.length ? 
+                                    `<span class="medicine-tag">+${pharmacy.total_medicines - pharmacy.available_medicines.length} more</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                card.innerHTML = `
+                    <div class="pharmacy-header">
+                        <div class="pharmacy-name">${pharmacy.name}</div>
+                        <div class="pharmacy-rating">
+                            <i class="fas fa-star"></i> ${pharmacy.rating}
+                        </div>
+                    </div>
+                    <div class="pharmacy-info">
+                        <div><i class="fas fa-map-marker-alt"></i> ${pharmacy.address}</div>
+                        <div><i class="fas fa-city"></i> ${pharmacy.city}</div>
+                        <div><i class="fas fa-phone"></i> ${pharmacy.phone || 'Not available'}</div>
+                        ${distanceHtml}
+                    </div>
+                    ${medicinesHtml}
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Search for medicine within current city
+        function searchMedicine() {
+            const medicine = document.getElementById('medicineInput').value.trim();
+            
+            if (!medicine) {
+                alert('Please enter a medicine name');
+                return;
+            }
+            
+            currentMedicine = medicine;
+            document.getElementById('searchInfo').textContent = 
+                `Showing pharmacy stores in ${currentCity} with "${medicine}"`;
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i><br>
+                    Searching for "${medicine}" in ${currentCity}...
+                </div>
+            `;
+            
+            loadCityPharmacies(currentCity, medicine);
+        }
+
+        // Clear medicine search and show all pharmacies in city
+        function clearMedicineSearch() {
+            currentMedicine = '';
+            document.getElementById('medicineInput').value = '';
+            document.getElementById('searchInfo').textContent = 
+                `Showing all pharmacy stores in ${currentCity}`;
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i><br>
+                    Loading all pharmacies...
+                </div>
+            `;
+            
+            loadCityPharmacies(currentCity);
+        }
+
+        // Allow Enter key in medicine search
+        document.addEventListener('DOMContentLoaded', function() {
+            const medicineInput = document.getElementById('medicineInput');
+            if (medicineInput) {
+                medicineInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchMedicine();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

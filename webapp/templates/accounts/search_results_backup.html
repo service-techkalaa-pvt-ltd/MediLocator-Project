@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - MediLocator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            color: #0f172a;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 50%, #06b6d4 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 2rem;
+            transition: opacity 0.3s;
+        }
+
+        .navbar-links a:hover {
+            opacity: 0.8;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .search-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .sort-dropdown, .filter-dropdown {
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .sort-dropdown:hover, .filter-dropdown:hover {
+            border-color: #1e40af;
+            background: #f0f4ff;
+        }
+
+        .results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .results-count {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .results-stats {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .results-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .pharmacy-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .pharmacy-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.15);
+        }
+
+        .pharmacy-header {
+            padding: 1.5rem;
+            border-bottom: 2px solid #f1f5f9;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .pharmacy-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+
+        .pharmacy-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .detail-item i {
+            color: #7c3aed;
+            margin-top: 0.25rem;
+            min-width: 20px;
+        }
+
+        .pharmacy-body {
+            padding: 1.5rem;
+        }
+
+        .rating-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .rating-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 700;
+        }
+
+        .distance-display {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .medicine-availability {
+            margin-top: 1rem;
+        }
+
+        .availability-title {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .medicine-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .medicine-item {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border-left: 4px solid #1e40af;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .medicine-item:hover {
+            background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
+            transform: translateX(4px);
+        }
+
+        .medicine-name {
+            font-weight: 600;
+            color: #1e40af;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .medicine-quantity {
+            font-size: 0.8rem;
+            color: #10b981;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .empty-state {
+            background: white;
+            padding: 4rem 2rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h2 {
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #94a3b8;
+            margin-bottom: 1.5rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination a, .pagination span {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #1e40af;
+            background: white;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .pagination a:hover {
+            background: #f0f4ff;
+            border-color: #1e40af;
+        }
+
+        .pagination .active {
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .medicine-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .medicine-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #94a3b8;
+            border: none;
+            background: none;
+        }
+
+        .modal-close:hover {
+            color: #0f172a;
+        }
+
+        .modal-header {
+            clear: both;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body {
+            color: #475569;
+        }
+
+        .modal-body-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .modal-body-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-body-label {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Medicine Search Styles */
+        .medicine-search-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .medicine-search-section h3 {
+            color: #1e40af;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .medicine-search-box {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .medicine-search-box input {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .medicine-search-box input:focus {
+            outline: none;
+            border-color: #1e40af;
+            background: #f0f4ff;
+        }
+
+        .medicine-search-box button {
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .medicine-search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .medicine-status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .medicine-status.show {
+            display: block;
+        }
+
+        .medicine-status.status {
+            background: #e3f2fd;
+            color: #1e40af;
+            border-left: 4px solid #1e40af;
+        }
+
+        .medicine-status.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .medicine-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .navbar-links a {
+                margin-left: 1rem;
+            }
+
+            .results-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .search-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .sort-dropdown, .filter-dropdown {
+                width: 100%;
+            }
+
+            .pharmacy-details {
+                grid-template-columns: 1fr;
+            }
+
+            .medicine-items {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <div class="navbar-content">
+            <h1><i class="fas fa-pills"></i> MediLocator</h1>
+            <div class="navbar-links">
+                <a href="/"><i class="fas fa-home"></i> Home</a>
+                <a href="/about_us/"><i class="fas fa-info-circle"></i> About</a>
+                <a href="/logout/"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Search Header -->
+        <div class="search-header">
+            <h2>Search Results</h2>
+            <p id="searchQuery" style="color: #64748b; margin-top: 0.5rem;"></p>
+            
+            <!-- Search Controls -->
+            <div class="search-controls">
+                <div style="flex: 1; min-width: 250px;">
+                    <input type="text" id="searchFilter" placeholder="🔍 Search pharmacies by name..." 
+                           class="sort-dropdown" style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;"
+                           onkeyup="liveSearchFilter()">
+                </div>
+                
+                <label style="margin-left: 1rem;"><i class="fas fa-sort"></i> Sort By:</label>
+                <select class="sort-dropdown" id="sortDropdown" onchange="updateSort()">
+                    <option value="distance">Nearest First</option>
+                    <option value="rating">Highest Rating</option>
+                    <option value="available">Medicine Available</option>
+                </select>
+
+                <label style="margin-left: 1rem;"><i class="fas fa-filter"></i> Filter:</label>
+                <select class="filter-dropdown" id="filterDropdown" onchange="updateFilter()">
+                    <option value="all">All Results</option>
+                    <option value="available">Medicine in Stock</option>
+                    <option value="top-rated">Top Rated (4+)</option>
+                </select>
+            </div>
+
+            <!-- Medicine Search Section -->
+            <div class="medicine-search-section">
+                <h3><i class="fas fa-prescription-bottle-medical"></i> Alternative: Search by Medicine</h3>
+                <div class="medicine-search-box">
+                    <input type="text" id="medicineInput" placeholder="Enter medicine name (e.g., Paracetamol, Aspirin, Ibuprofen)" />
+                    <button onclick="searchMedicine()"><i class="fas fa-search"></i> Search Medicine</button>
+                </div>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="medicineStatus" class="medicine-status"></div>
+        </div>
+
+        <!-- Results Info -->
+        <div class="results-info">
+            <div class="results-count">
+                <i class="fas fa-store"></i> <span id="resultCount">0</span> Pharmacies Found
+            </div>
+            <div class="results-stats">
+                <div><i class="fas fa-location-dot"></i> <span id="searchRadius">10</span> km radius</div>
+                <div><i class="fas fa-pills"></i> <span id="medicineCount">0</span> with medicine</div>
+            </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div class="results-grid" id="resultsContainer">
+            <!-- Results will be loaded here -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-search"></i>
+            <h2>No Pharmacies Found</h2>
+            <p>Try adjusting your search criteria or expanding the search radius.</p>
+            <a href="/" class="btn btn-primary" style="display: inline-block; margin-top: 1rem;">← Back to Search</a>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="paginationContainer"></div>
+    </div>
+
+    <!-- Medicine Detail Modal -->
+    <div class="medicine-modal" id="medicineModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeMedicineModal()">&times;</button>
+            <div class="modal-header">
+                <h2 id="modalMedicineName"></h2>
+            </div>
+            <div class="modal-body">
+                <div class="modal-body-item">
+                    <div class="modal-body-label">Generic Name</div>
+                    <div id="modalGenericName">-</div>
+                </div>
+                <div class="modal-body-item">
+                    <div class="modal-body-label">Category</div>
+                    <div id="modalCategory">-</div>
+                </div>
+                <div class="modal-body-item">
+                    <div class="modal-body-label">Dosage</div>
+                    <div id="modalDosage">-</div>
+                </div>
+                <div class="modal-body-item">
+                    <div class="modal-body-label">Available in Pharmacies</div>
+                    <div id="modalPharmacyCount">-</div>
+                </div>
+                <div class="modal-body-item">
+                    <div class="modal-body-label">Description</div>
+                    <div id="modalDescription">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        let allResults = [];
+        let filteredResults = [];
+        let currentSort = 'distance';
+        let currentFilter = 'all';
+        let searchMode = 'both'; // 'both', 'location', 'medicine'
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, starting search...');
+            
+            const lat = parseFloat(getUrlParameter('lat'));
+            const lon = parseFloat(getUrlParameter('lon'));
+            const medicine = getUrlParameter('medicine') || '';
+            const radius = parseFloat(getUrlParameter('radius')) || 10;
+            const city = getUrlParameter('city') || '';
+            const mode = getUrlParameter('mode') || 'both';
+            
+            console.log('Search params:', {lat, lon, medicine, radius, city, mode});
+            
+            searchMode = mode;
+
+            if (mode === 'both') {
+                document.getElementById('searchQuery').textContent = 
+                    `Location: ${lat.toFixed(2)}°, ${lon.toFixed(2)}° | Medicine: ${medicine || 'Any'} | Radius: ${radius}km`;
+                loadSearchResults(lat, lon, medicine, radius);
+            } else if (mode === 'location') {
+                document.getElementById('searchQuery').textContent = 
+                    `Showing all pharmacies near Location: ${lat.toFixed(2)}°, ${lon.toFixed(2)}° | Radius: ${radius}km`;
+                loadPharmaciesByLocation(lat, lon, radius);
+            } else if (mode === 'medicine') {
+                document.getElementById('searchQuery').textContent = 
+                    `Showing all pharmacies with "${medicine}" medicine`;
+                loadPharmaciesByMedicine(medicine);
+            } else if (mode === 'city') {
+                document.getElementById('searchQuery').textContent = 
+                    `Showing All Pharmacies in: ${city.toUpperCase()}`;
+                // Hide the medicine search alternative when in city-only mode
+                document.querySelector('.medicine-search-section').style.display = 'none';
+                loadPharmaciesByCity(city);
+            }
+            
+            document.getElementById('searchRadius').textContent = radius;
+        });
+
+        function loadPharmaciesByLocation(lat, lon, radius) {
+            const url = `/api/all-pharmacies/?lat=${lat}&lon=${lon}&radius=${radius}&sort=distance`;
+            
+            console.log('Fetching location pharmacies:', url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Location API Response:', data);
+                    
+                    if (data.success && data.pharmacies && data.pharmacies.length > 0) {
+                        console.log('Found pharmacies:', data.pharmacies.length);
+                        allResults = data.pharmacies;
+                        displayResults();
+                        document.getElementById('resultCount').textContent = data.pharmacies.length;
+                        document.getElementById('emptyState').style.display = 'none';
+                    } else {
+                        console.log('No pharmacies in location');
+                        document.getElementById('resultCount').textContent = '0';
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('resultsContainer').innerHTML = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Location fetch error:', error);
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('resultCount').textContent = '0';
+                });
+        }
+
+        function loadPharmaciesByMedicine(medicine) {
+            const url = `/api/search-medicines/?medicine=${encodeURIComponent(medicine)}&sort=distance`;
+            
+            console.log('Fetching medicine pharmacies:', url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Medicine API Response:', data);
+                    
+                    if (data.success && data.pharmacies && data.pharmacies.length > 0) {
+                        console.log('Found pharmacies:', data.pharmacies.length);
+                        allResults = data.pharmacies;
+                        displayResults();
+                        document.getElementById('resultCount').textContent = data.pharmacies.length;
+                        document.getElementById('medicineCount').textContent = data.pharmacies.length;
+                        document.getElementById('emptyState').style.display = 'none';
+                    } else {
+                        console.log('No pharmacies with this medicine');
+                        document.getElementById('resultCount').textContent = '0';
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('resultsContainer').innerHTML = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Medicine fetch error:', error);
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('resultCount').textContent = '0';
+                });
+        }
+
+        function loadPharmaciesByCity(city) {
+            const url = `/api/search-by-city/?city=${encodeURIComponent(city)}&sort=rating`;
+            
+            console.log('Fetching city pharmacies:', url);
+            
+            // Hide stats section in city-only mode
+            const statsEl = document.querySelector('.results-stats');
+            if (statsEl) {
+                statsEl.style.display = 'none';
+            }
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('City API Response:', data);
+                    
+                    if (data.success && data.pharmacies && data.pharmacies.length > 0) {
+                        console.log('Found pharmacies:', data.pharmacies.length);
+                        allResults = data.pharmacies;
+                        displayResults();
+                        document.getElementById('resultCount').textContent = data.pharmacies.length;
+                        document.getElementById('emptyState').style.display = 'none';
+                    } else {
+                        console.log('No pharmacies in this city');
+                        document.getElementById('resultCount').textContent = '0';
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('resultsContainer').innerHTML = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('City fetch error:', error);
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('resultCount').textContent = '0';
+                });
+        }
+
+        function loadSearchResults(lat, lon, medicine, radius) {
+            // Get city from URL parameters
+            const city = getUrlParameter('city') || '';
+            const url = `/api/search-pharmacies/?lat=${lat}&lon=${lon}&radius=${radius}&medicine=${encodeURIComponent(medicine)}&city=${encodeURIComponent(city)}&sort=distance`;
+            
+            console.log('Fetching:', url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Response:', data);
+                    
+                    if (data.success && data.pharmacies && data.pharmacies.length > 0) {
+                        console.log('Found pharmacies:', data.pharmacies.length);
+                        allResults = data.pharmacies;
+                        displayResults();
+                        document.getElementById('resultCount').textContent = data.pharmacies.length;
+                        document.getElementById('medicineCount').textContent = 
+                            data.pharmacies.filter(p => p.medicine_available).length;
+                        document.getElementById('emptyState').style.display = 'none';
+                    } else {
+                        console.log('No pharmacies found or API error');
+                        document.getElementById('resultCount').textContent = '0';
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('resultsContainer').innerHTML = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('resultCount').textContent = '0';
+                });
+        }
+
+        function displayResults() {
+            console.log('displayResults called with allResults:', allResults);
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            filteredResults = filterResults(allResults);
+
+            console.log('filtered results:', filteredResults.length);
+
+            filteredResults.forEach((pharmacy, index) => {
+                console.log(`Creating card ${index + 1}: ${pharmacy.name}`);
+                const card = createPharmacyCard(pharmacy);
+                container.appendChild(card);
+            });
+
+            if (filteredResults.length === 0) {
+                console.log('No results, showing empty state');
+                document.getElementById('emptyState').style.display = 'block';
+            } else {
+                console.log(`Displaying ${filteredResults.length} results`);
+                document.getElementById('emptyState').style.display = 'none';
+            }
+        }
+
+        function filterResults(results) {
+            let filtered = [...results];
+
+            if (currentFilter === 'available') {
+                filtered = filtered.filter(p => p.medicine_available);
+            } else if (currentFilter === 'top-rated') {
+                filtered = filtered.filter(p => p.rating >= 4);
+            }
+
+            // Sort
+            if (currentSort === 'rating') {
+                filtered.sort((a, b) => b.rating - a.rating);
+            } else if (currentSort === 'available') {
+                filtered.sort((a, b) => (b.medicine_available - a.medicine_available) || (b.rating - a.rating));
+            } else {
+                filtered.sort((a, b) => a.distance - b.distance);
+            }
+
+            return filtered;
+        }
+
+        function createPharmacyCard(pharmacy) {
+            const card = document.createElement('div');
+            card.className = 'pharmacy-card';
+
+            const medicinesHtml = pharmacy.available_medicines.map(med => `
+                <div class="medicine-item" onclick="showMedicineDetail('${med.name}')">
+                    <div class="medicine-name">${med.name}</div>
+                </div>
+            `).join('');
+
+            card.innerHTML = `
+                <div class="pharmacy-header">
+                    <div class="pharmacy-name">${pharmacy.name}</div>
+                    <div class="pharmacy-details">
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${pharmacy.address}, ${pharmacy.city}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-phone"></i>
+                            <span>${pharmacy.phone}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pharmacy-body">
+                    <div class="rating-section">
+                        <div class="rating-display">
+                            <i class="fas fa-star"></i> ${pharmacy.rating}
+                        </div>
+                        <div class="distance-display">
+                            <i class="fas fa-location-dot"></i> ${pharmacy.distance} km away
+                        </div>
+                        ${pharmacy.medicine_available ? '<div style="background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;"><i class="fas fa-check"></i> In Stock</div>' : ''}
+                    </div>
+                    
+                    <div class="medicine-availability">
+                        <div class="availability-title">
+                            <i class="fas fa-pills"></i> Available Medicines
+                        </div>
+                        <div class="medicine-items">
+                            ${medicinesHtml || '<div style="color: #94a3b8; padding: 1rem; text-align: center;">No medicines listed</div>'}
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="callPharmacy('${pharmacy.phone}')">
+                            <i class="fas fa-phone"></i> Call
+                        </button>
+                        <button class="btn btn-secondary" onclick="openMaps(${pharmacy.latitude}, ${pharmacy.longitude})">
+                            <i class="fas fa-map"></i> Directions
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function updateSort() {
+            currentSort = document.getElementById('sortDropdown').value;
+            displayResults();
+        }
+
+        function updateFilter() {
+            currentFilter = document.getElementById('filterDropdown').value;
+            displayResults();
+        }
+
+        function liveSearchFilter() {
+            const searchText = document.getElementById('searchFilter').value.toLowerCase().trim();
+            const container = document.getElementById('resultsContainer');
+            const cards = container.querySelectorAll('.pharmacy-card');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const pharmacyName = card.querySelector('.pharmacy-name').textContent.toLowerCase();
+                const address = card.querySelector('.detail-item span').textContent.toLowerCase();
+                
+                if (pharmacyName.includes(searchText) || address.includes(searchText)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show empty state if no results match
+            if (visibleCount === 0 && searchText) {
+                document.getElementById('emptyState').style.display = 'block';
+            } else if (visibleCount === 0 && !searchText) {
+                document.getElementById('emptyState').style.display = 'none';
+            } else {
+                document.getElementById('emptyState').style.display = 'none';
+            }
+        }
+
+        function showMedicineDetail(medicineName) {
+            const modal = document.getElementById('medicineModal');
+            modal.classList.add('active');
+            
+            // Fetch medicine details
+            fetch(`/api/get-medicines/?search=${encodeURIComponent(medicineName)}&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.medicines.length > 0) {
+                        const med = data.medicines[0];
+                        document.getElementById('modalMedicineName').textContent = med.name;
+                        document.getElementById('modalCategory').textContent = med.category || '-';
+                        
+                        // Fetch full details
+                        return fetch(`/api/medicine-detail/${med.id}/`);
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.medicine) {
+                        const med = data.medicine;
+                        document.getElementById('modalGenericName').textContent = med.generic_name || '-';
+                        document.getElementById('modalCategory').textContent = med.category || '-';
+                        document.getElementById('modalDosage').textContent = med.dosage || '-';
+                        document.getElementById('modalPharmacyCount').textContent = med.available_in_pharmacies;
+                        document.getElementById('modalPriceRange').textContent = 
+                            `₹${med.price_range.min} - ₹${med.price_range.max}`;
+                        document.getElementById('modalDescription').textContent = med.description || '-';
+                    }
+                });
+        }
+
+        function closeMedicineModal() {
+            document.getElementById('medicineModal').classList.remove('active');
+        }
+
+        function callPharmacy(phone) {
+            window.location.href = `tel:${phone}`;
+        }
+
+        function openMaps(lat, lon) {
+            window.open(`https://maps.google.com/?q=${lat},${lon}`, '_blank');
+        }
+
+        // Close modal on outside click
+        document.getElementById('medicineModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeMedicineModal();
+            }
+        });
+
+        // ==================== MEDICINE SEARCH FUNCTIONS ====================
+
+        // Search for a specific medicine across all pharmacies
+        function searchMedicine() {
+            const medicine = document.getElementById('medicineInput').value.trim();
+            if (!medicine) {
+                showMedicineStatus('Please enter a medicine name', 'error');
+                return;
+            }
+            
+            showMedicineStatus('Searching for ' + medicine + '...', 'status');
+            const url = `/api/search-medicines/?medicine=${encodeURIComponent(medicine)}`;
+            
+            console.log('Searching medicine:', url);
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('API error: ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Medicine search response:', data);
+                    
+                    if (!data.success) {
+                        showMedicineStatus('Search returned no results', 'error');
+                        document.getElementById('resultCount').textContent = '0';
+                        document.getElementById('resultsContainer').innerHTML = '';
+                        document.getElementById('emptyState').style.display = 'block';
+                        return;
+                    }
+                    
+                    if (!data.pharmacies || data.pharmacies.length === 0) {
+                        showMedicineStatus(`No pharmacies found with "${medicine}"`, 'error');
+                        document.getElementById('resultCount').textContent = '0';
+                        document.getElementById('resultsContainer').innerHTML = '';
+                        document.getElementById('emptyState').style.display = 'block';
+                        return;
+                    }
+                    
+                    // Success!
+                    showMedicineStatus(`Found ${data.total} pharmacies with "${medicine}"`, 'success');
+                    document.getElementById('resultCount').textContent = data.total;
+                    document.getElementById('medicineCount').textContent = data.total;
+                    document.getElementById('searchQuery').textContent = `Searching for medicine: "${medicine}"`;
+                    document.getElementById('searchRadius').textContent = '-';
+                    
+                    // Store results and display
+                    allResults = data.pharmacies;
+                    searchMode = 'medicine';
+                    displayResults();
+                    document.getElementById('emptyState').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Medicine search error:', error);
+                    showMedicineStatus('Error: ' + error.message, 'error');
+                    document.getElementById('resultCount').textContent = '0';
+                    document.getElementById('resultsContainer').innerHTML = '';
+                    document.getElementById('emptyState').style.display = 'block';
+                });
+        }
+
+        // Show status messages for medicine search
+        function showMedicineStatus(message, type) {
+            const statusDiv = document.getElementById('medicineStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = 'medicine-status show ' + type;
+        }
+
+        // Allow Enter key to search for medicine
+        document.addEventListener('DOMContentLoaded', function() {
+            const medicineInput = document.getElementById('medicineInput');
+            if (medicineInput) {
+                medicineInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        searchMedicine();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}MediLocator - Find Pharmacies with Medicines in Stock{% endblock %}</title>
+    
+    <!-- Primary Meta Tags -->
+    <meta name="description" content="{% block meta_description %}Find nearby pharmacies with your prescribed medicines in stock. Upload prescriptions or search manually with AI-powered assistance.{% endblock %}">
+    <meta name="keywords" content="pharmacy finder, medicine search, prescription upload, nearby pharmacies">
+    <meta name="author" content="MediLocator">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* Additional inline critical CSS for faster load */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container flex justify-between items-center">
+            <a href="{% url 'home' %}" class="navbar-brand">
+                <i class="fas fa-pills"></i> MediLocator
+            </a>
+            
+            <div class="flex items-center gap-lg">
+                <ul class="navbar-nav" style="margin: 0;">
+                    {% if user.is_authenticated %}
+                        <li><a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                            <i class="fas fa-home"></i> Home
+                        </a></li>
+                        <li><a href="{% url 'prescription_scanner' %}" class="nav-link {% if request.resolver_match.url_name == 'prescription_scanner' %}active{% endif %}">
+                            <i class="fas fa-file-prescription"></i> Upload Prescription
+                        </a></li>
+                        <li><a href="{% url 'chatbot' %}" class="nav-link {% if request.resolver_match.url_name == 'chatbot' %}active{% endif %}">
+                            <i class="fas fa-comments"></i> Chatbot
+                        </a></li>
+                        <li><a href="{% url 'about_us' %}" class="nav-link {% if request.resolver_match.url_name == 'about_us' %}active{% endif %}">
+                            <i class="fas fa-info-circle"></i> About
+                        </a></li>
+                        
+                        <!-- User Profile Dropdown -->
+                        <li class="dropdown">
+                            <button class="btn btn-secondary btn-sm" onclick="toggleDropdown()">
+                                <i class="fas fa-user-circle"></i> {{ user.username }}
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div id="userDropdown" class="dropdown-menu" style="display: none;">
+                                {% if user.profile.role == 'PHARMACY_OWNER' %}
+                                    <a href="{% url 'pharmacy_dashboard' %}" class="dropdown-item">
+                                        <i class="fas fa-store"></i> My Pharmacy
+                                    </a>
+                                {% endif %}
+                                {% if user.profile.role == 'ADMIN' or user.is_staff %}
+                                    <a href="{% url 'admin_dashboard' %}" class="dropdown-item">
+                                        <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'user_profile' %}" class="dropdown-item">
+                                    <i class="fas fa-user-edit"></i> My Profile
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a href="{% url 'logout' %}" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li><a href="{% url 'about_us' %}" class="nav-link">
+                            <i class="fas fa-info-circle"></i> About
+                        </a></li>
+                        <li><a href="{% url 'login' %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a></li>
+                        <li><a href="{% url 'register' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-user-plus"></i> Sign Up
+                        </a></li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Dark Mode Toggle -->
+                <button id="themeToggle" class="btn btn-secondary btn-sm" onclick="toggleTheme()" title="Toggle Dark Mode">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages/Alerts -->
+    {% if messages %}
+        <div class="container mt-lg">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} fade-in" role="alert">
+                    {% if message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% elif message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; cursor: pointer; font-size: 1.25rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-xl" style="background: var(--bg-secondary); padding: 3rem 0 1rem; border-top: 1px solid var(--border-color);">
+        <div class="container">
+            <div class="flex justify-between" style="flex-wrap: wrap; gap: 2rem;">
+                <div style="flex: 1; min-width: 250px;">
+                    <h3 class="navbar-brand" style="font-size: 1.5rem;">
+                        <i class="fas fa-pills"></i> MediLocator
+                    </h3>
+                    <p class="text-sm" style="color: var(--text-secondary); margin-top: 1rem;">
+                        Your trusted companion for finding nearby pharmacies with medicines in stock. 
+                        Fast, accurate, and powered by AI.
+                    </p>
+                    <div class="flex gap-md mt-md">
+                        <a href="#" class="text-sm" style="color: var(--text-secondary);"><i class="fab fa-facebook fa-lg"></i></a>
+                        <a href="#" class="text-sm" style="color: var(--text-secondary);"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-sm" style="color: var(--text-secondary);"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="#" class="text-sm" style="color: var(--text-secondary);"><i class="fab fa-linkedin fa-lg"></i></a>
+                    </div>
+                </div>
+                
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="font-size: 1rem; margin-bottom: 1rem;">Quick Links</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 0.5rem;"><a href="{% url 'home' %}" class="text-sm" style="color: var(--text-secondary);">Home</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="{% url 'about_us' %}" class="text-sm" style="color: var(--text-secondary);">About Us</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="{% url 'prescription_scanner' %}" class="text-sm" style="color: var(--text-secondary);">Upload Prescription</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="{% url 'chatbot' %}" class="text-sm" style="color: var(--text-secondary);">AI Chatbot</a></li>
+                    </ul>
+                </div>
+                
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="font-size: 1rem; margin-bottom: 1rem;">Support</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 0.5rem;"><a href="#" class="text-sm" style="color: var(--text-secondary);">Help Center</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="#" class="text-sm" style="color: var(--text-secondary);">Privacy Policy</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="#" class="text-sm" style="color: var(--text-secondary);">Terms of Service</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="{% url 'feedback' %}" class="text-sm" style="color: var(--text-secondary);">Contact Us</a></li>
+                    </ul>
+                </div>
+                
+                <div style="flex: 1; min-width: 250px;">
+                    <h4 style="font-size: 1rem; margin-bottom: 1rem;">Newsletter</h4>
+                    <p class="text-sm" style="color: var(--text-secondary);">Stay updated with our latest features and health tips.</p>
+                    <form class="flex gap-sm mt-md">
+                        <input type="email" placeholder="Your email" class="form-control" style="flex: 1;">
+                        <button type="submit" class="btn btn-primary btn-sm">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: center;">
+                <p class="text-sm" style="color: var(--text-secondary);">
+                    &copy; 2025 MediLocator. All rights reserved. Made with <i class="fas fa-heart" style="color: #ef4444;"></i> by TechKala Team
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <script>
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            const icon = document.getElementById('themeIcon');
+            icon.className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+        
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const icon = document.getElementById('themeIcon');
+            icon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        });
+        
+        // Dropdown Toggle
+        function toggleDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const button = event.target.closest('.dropdown button');
+            
+            if (!button && dropdown && dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            }
+        });
+        
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+    </script>
+    
+    <style>
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            z-index: 1000;
+        }
+        
+        .dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: background var(--transition-fast);
+        }
+        
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.5rem 0;
+        }
+        
+        .text-danger {
+            color: var(--error-dark) !important;
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        /* Responsive navbar */
+        @media (max-width: 768px) {
+            .navbar-nav {
+                flex-direction: column;
+                gap: 0.5rem !important;
+            }
+            
+            .footer .flex {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

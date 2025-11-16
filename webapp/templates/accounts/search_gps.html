@@ -1,0 +1,918 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Pharmacy Search - MediLocator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation */
+        nav {
+            background: linear-gradient(135deg, #0F172A 0%, #1E40AF 100%);
+            padding: 1rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #06B6D4 0%, #7C3AED 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #E0E7FF;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-links a:hover {
+            color: #06B6D4;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Header Section */
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.1);
+            border-left: 5px solid #1E40AF;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #0F172A;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header h1 i {
+            color: #7C3AED;
+            font-size: 2.2rem;
+        }
+
+        .header p {
+            color: #64748B;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        /* Main Form Card */
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.1);
+            border: 2px solid #E2E8F0;
+            transition: all 0.3s;
+        }
+
+        .form-card:hover {
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.15);
+            border-color: #7C3AED;
+        }
+
+        .form-card h2 {
+            font-size: 1.5rem;
+            color: #0F172A;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .form-group label .required {
+            color: #DC2626;
+            margin-left: 0.25rem;
+        }
+
+        .form-group .hint {
+            font-size: 0.85rem;
+            color: #64748B;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1E40AF;
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
+            background: #EFF6FF;
+        }
+
+        .form-group input::placeholder {
+            color: #94A3B8;
+        }
+
+        .form-group input.error,
+        .form-group select.error {
+            border-color: #DC2626;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+        }
+
+        .error-message {
+            color: #DC2626;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .success-message {
+            color: #16A34A;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Medicine Autocomplete Dropdown */
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #E2E8F0;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #F1F5F9;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background: #EFF6FF;
+        }
+
+        .autocomplete-item.selected {
+            background: #DBEAFE;
+            border-left: 3px solid #1E40AF;
+        }
+
+        .autocomplete-item-name {
+            font-weight: 600;
+            color: #1E40AF;
+            margin-bottom: 0.25rem;
+        }
+
+        .autocomplete-item-category {
+            font-size: 0.8rem;
+            color: #94A3B8;
+        }
+
+        /* Buttons Container */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 50px;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1E40AF, #7C3AED);
+            color: white;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.2);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1E40AF;
+            border: 2px solid #1E40AF;
+        }
+
+        .btn-secondary:hover {
+            background: #EFF6FF;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading State */
+        .btn.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #DBEAFE 0%, #E0E7FF 100%);
+            border-left: 4px solid #1E40AF;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-box i {
+            color: #1E40AF;
+            font-size: 1.3rem;
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .info-box-content h4 {
+            color: #0F172A;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .info-box-content p {
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Location Status Display */
+        .location-status {
+            background: #F0FDF4;
+            border-left: 4px solid #16A34A;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            display: none;
+        }
+
+        .location-status.active {
+            display: flex;
+        }
+
+        .location-status.error {
+            background: #FEF2F2;
+            border-left-color: #DC2626;
+        }
+
+        .location-status i {
+            font-size: 1.5rem;
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .location-status.success i {
+            color: #16A34A;
+        }
+
+        .location-status.error i {
+            color: #DC2626;
+        }
+
+        .location-content h4 {
+            color: #0F172A;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .location-content p {
+            color: #475569;
+            font-size: 0.9rem;
+        }
+
+        /* Steps Section */
+        .steps-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #F8FAFC;
+            border-radius: 10px;
+        }
+
+        .steps-section h3 {
+            color: #0F172A;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .steps-list {
+            list-style: none;
+        }
+
+        .steps-list li {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .steps-list li:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .steps-list .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: #1E40AF;
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .steps-list span {
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, #0F172A 0%, #1E40AF 100%);
+            color: white;
+            padding: 2rem;
+            margin-top: auto;
+            text-align: center;
+            box-shadow: 0 -4px 15px rgba(30, 64, 175, 0.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                flex: none;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <a href="{% url 'home' %}" class="logo">
+            <i class="fas fa-pills"></i>
+            <span>MediLocator</span>
+        </a>
+        <div class="nav-links">
+            <a href="{% url 'home' %}"><i class="fas fa-home"></i> Home</a>
+            <a href="{% url 'about_us' %}"><i class="fas fa-info-circle"></i> About</a>
+            <a href="{% url 'prescription_scanner' %}"><i class="fas fa-file-prescription"></i> Prescription Scanner</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-location-crosshairs"></i>
+                GPS-Based Pharmacy Search
+            </h1>
+            <p>Find nearby pharmacies with your device's GPS. Enter the medicine you need and we'll locate the nearest pharmacies with availability, sorted by distance and ratings.</p>
+        </div>
+
+        <!-- Location Status -->
+        <div id="locationStatus" class="location-status">
+            <i class="fas fa-check-circle"></i>
+            <div class="location-content">
+                <h4>Your Location Detected</h4>
+                <p id="locationCoords"></p>
+            </div>
+        </div>
+
+        <!-- Search Form Card -->
+        <div class="form-card">
+            <h2>
+                <i class="fas fa-map-pin"></i>
+                Search with GPS
+            </h2>
+
+            <form id="gpsSearchForm">
+                <!-- Medicine Name Input -->
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-pills"></i> Medicine Name <span class="required">*</span>
+                    </label>
+                    <div class="autocomplete-container">
+                        <input 
+                            type="text" 
+                            id="medicineName" 
+                            placeholder="Start typing (e.g., Paracetamol, Aspirin, Cough Syrup)"
+                            required
+                            autocomplete="off"
+                            oninput="handleMedicineInput(this.value)"
+                        >
+                        <div id="medicineDropdown" class="autocomplete-dropdown"></div>
+                    </div>
+                    <div class="hint">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>Start typing to see suggestions from our database</span>
+                    </div>
+                    <div id="medicineError" class="error-message" style="display: none;"></div>
+                </div>
+
+                <!-- Search Radius -->
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-ruler"></i> Search Radius
+                    </label>
+                    <select id="searchRadius">
+                        <option value="5">Within 5 km</option>
+                        <option value="10" selected>Within 10 km</option>
+                        <option value="15">Within 15 km</option>
+                        <option value="20">Within 20 km</option>
+                        <option value="25">Within 25 km</option>
+                    </select>
+                    <div class="hint">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>How far from your current location to search</span>
+                    </div>
+                </div>
+
+                <!-- Steps Section -->
+                <div class="steps-section">
+                    <h3><i class="fas fa-list-ol"></i> How GPS Search Works</h3>
+                    <ul class="steps-list">
+                        <li>
+                            <div class="step-number">1</div>
+                            <span><strong>Enter Medicine:</strong> Type the medicine you're looking for in the field above</span>
+                        </li>
+                        <li>
+                            <div class="step-number">2</div>
+                            <span><strong>Request Permission:</strong> Click "Get My Location" to allow GPS access (browser will ask permission)</span>
+                        </li>
+                        <li>
+                            <div class="step-number">3</div>
+                            <span><strong>Search Nearby:</strong> Your location will be detected and pharmacies will be found within your selected radius</span>
+                        </li>
+                        <li>
+                            <div class="step-number">4</div>
+                            <span><strong>View Results:</strong> See all nearby pharmacies sorted by medicine availability, distance, and ratings</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="info-box-content">
+                        <h4>How We Show Results</h4>
+                        <p>We'll find pharmacies near your current location that have the medicine you're looking for, sorted by: <strong>1) Medicine Availability</strong> → <strong>2) Distance</strong> → <strong>3) Live Ratings from Google</strong></p>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="button" class="btn btn-primary" id="getLocationBtn" onclick="getDeviceLocation()">
+                        <i class="fas fa-location-crosshairs"></i>
+                        <span>Get My Location</span>
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled style="opacity: 0.6; cursor: not-allowed;">
+                        <i class="fas fa-search"></i>
+                        <span>Search Pharmacies</span>
+                    </button>
+                </div>
+
+                <!-- Hidden fields to store GPS coordinates -->
+                <input type="hidden" id="latitude" value="">
+                <input type="hidden" id="longitude" value="">
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 MediLocator. All rights reserved. | Find medicines near you with confidence.</p>
+    </footer>
+
+    <script>
+        // Global variables for GPS coordinates
+        let currentLat = null;
+        let currentLon = null;
+
+        // Get device GPS location
+        function getDeviceLocation() {
+            const btn = document.getElementById('getLocationBtn');
+            btn.disabled = true;
+            btn.classList.add('loading');
+
+            if (!navigator.geolocation) {
+                showLocationError('Geolocation is not supported by your browser. Please try manual search instead.');
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentLat = position.coords.latitude;
+                    currentLon = position.coords.longitude;
+
+                    // Store in form
+                    document.getElementById('latitude').value = currentLat;
+                    document.getElementById('longitude').value = currentLon;
+
+                    // Show location status
+                    showLocationSuccess(currentLat, currentLon);
+
+                    // Enable submit button
+                    document.getElementById('submitBtn').disabled = false;
+                    document.getElementById('submitBtn').style.opacity = '1';
+                    document.getElementById('submitBtn').style.cursor = 'pointer';
+
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                },
+                function(error) {
+                    let errorMsg = 'Unable to get your location. ';
+                    
+                    if (error.code === error.PERMISSION_DENIED) {
+                        errorMsg = '📍 Location permission denied. Please enable GPS in your browser settings and try again.';
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        errorMsg = '📍 Location information is unavailable. Please check your GPS and try again.';
+                    } else if (error.code === error.TIMEOUT) {
+                        errorMsg = '📍 Location request timed out. Please try again.';
+                    }
+
+                    showLocationError(errorMsg);
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                },
+                {
+                    timeout: 15000,
+                    maximumAge: 0,
+                    enableHighAccuracy: true
+                }
+            );
+        }
+
+        // Show location success
+        function showLocationSuccess(lat, lon) {
+            const status = document.getElementById('locationStatus');
+            const coords = document.getElementById('locationCoords');
+            
+            coords.textContent = `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
+            status.classList.add('active');
+            status.classList.remove('error');
+            status.querySelector('i').className = 'fas fa-check-circle';
+            
+            // Reverse geocode to get city
+            detectCityFromCoordinates(lat, lon);
+        }
+        
+        // Detect city from coordinates using reverse geocoding
+        async function detectCityFromCoordinates(lat, lon) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const data = await response.json();
+                
+                if (data.address) {
+                    const city = data.address.city || data.address.town || data.address.village || data.address.state_district || 'Unknown';
+                    // Store city in a hidden input or global variable
+                    window.detectedCity = city;
+                    console.log('Detected city:', city);
+                }
+            } catch (error) {
+                console.error('Error detecting city:', error);
+                window.detectedCity = '';
+            }
+        }
+
+        // Show location error
+        function showLocationError(message) {
+            const status = document.getElementById('locationStatus');
+            const coords = document.getElementById('locationCoords');
+            
+            coords.textContent = message;
+            status.classList.add('active', 'error');
+            status.querySelector('i').className = 'fas fa-exclamation-circle';
+        }
+
+        // Medicine autocomplete
+        let autocompleteTimeout;
+
+        function handleMedicineInput(value) {
+            clearTimeout(autocompleteTimeout);
+            
+            if (value.length < 2) {
+                document.getElementById('medicineDropdown').classList.remove('show');
+                return;
+            }
+
+            autocompleteTimeout = setTimeout(() => {
+                fetchMedicineSuggestions(value);
+            }, 300);
+        }
+
+        function fetchMedicineSuggestions(searchTerm) {
+            const url = `/api/get-medicines/?search=${encodeURIComponent(searchTerm)}&limit=8`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.medicines && data.medicines.length > 0) {
+                        displayMedicineSuggestions(data.medicines);
+                    } else {
+                        document.getElementById('medicineDropdown').classList.remove('show');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching medicines:', error);
+                });
+        }
+
+        function displayMedicineSuggestions(medicines) {
+            const dropdown = document.getElementById('medicineDropdown');
+            dropdown.innerHTML = '';
+
+            medicines.forEach((med) => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item';
+                div.innerHTML = `
+                    <div class="autocomplete-item-name">💊 ${med.name}</div>
+                    <div class="autocomplete-item-category">${med.category || 'Medicine'}</div>
+                `;
+                div.addEventListener('click', () => {
+                    document.getElementById('medicineName').value = med.name;
+                    dropdown.classList.remove('show');
+                });
+                dropdown.appendChild(div);
+            });
+
+            dropdown.classList.add('show');
+        }
+
+        // Form submission
+        document.getElementById('gpsSearchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get values
+            const medicine = document.getElementById('medicineName').value.trim();
+            const radius = document.getElementById('searchRadius').value;
+            const lat = document.getElementById('latitude').value;
+            const lon = document.getElementById('longitude').value;
+
+            // Validation
+            if (!medicine) {
+                showError('medicineError', 'Please enter a medicine name');
+                document.getElementById('medicineName').classList.add('error');
+                return;
+            } else {
+                clearError('medicineError');
+                document.getElementById('medicineName').classList.remove('error');
+            }
+
+            if (!lat || !lon) {
+                showError('medicineError', 'Please get your location first by clicking "Get My Location"');
+                return;
+            }
+
+            // Show loading
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+
+            try {
+                // Get detected city from global variable
+                const detectedCity = window.detectedCity || '';
+                
+                // Call API with GPS location and city
+                const response = await fetch(`/api/search-gps/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        medicine_name: medicine,
+                        latitude: parseFloat(lat),
+                        longitude: parseFloat(lon),
+                        radius: parseInt(radius),
+                        city: detectedCity  // Pass detected city
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to results page with city
+                    const params = new URLSearchParams({
+                        medicine: medicine,
+                        lat: lat,
+                        lon: lon,
+                        radius: radius,
+                        city: detectedCity,  // Include city in URL
+                        mode: 'gps'
+                    });
+                    window.location.href = `/search-results/?${params.toString()}`;
+                } else {
+                    showError('medicineError', data.error || 'Search failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('medicineError', 'Network error. Please check your connection and try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+            }
+        });
+
+        // Helper functions
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'flex';
+        }
+
+        function clearError(elementId) {
+            const element = document.getElementById(elementId);
+            element.textContent = '';
+            element.style.display = 'none';
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'medicineName') {
+                document.getElementById('medicineDropdown').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

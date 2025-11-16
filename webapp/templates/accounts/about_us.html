@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - MediLocator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',sans-serif;background:#F8FAFC}
+        nav{background:linear-gradient(135deg,#0F172A 0%,#1E40AF 100%);padding:1rem 3rem;box-shadow:0 8px 32px rgba(30,64,175,0.2);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+        .logo{font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,#06B6D4 0%,#7C3AED 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:flex;align-items:center;gap:0.8rem}
+        .nav-links{display:flex;gap:2rem;align-items:center}
+        .nav-links a{text-decoration:none;color:#E0E7FF;font-weight:600;display:flex;align-items:center;gap:0.5rem;transition:all 0.3s}
+        .nav-links a:hover{color:#06B6D4}
+        .btn-primary{background:linear-gradient(135deg,#7C3AED 0%,#06B6D4 100%);color:white;padding:0.7rem 1.8rem;border-radius:25px;border:none;cursor:pointer;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(6,182,212,0.4)}
+        .hero{background:linear-gradient(135deg,#1E40AF 0%,#7C3AED 50%,#06B6D4 100%);color:white;padding:4rem 2rem;text-align:center}
+        .hero h1{font-size:2.5rem;margin-bottom:1rem}
+        .container{max-width:1200px;margin:0 auto;padding:3rem 2rem}
+        .section{margin:3rem 0}
+        .section h2{font-size:2rem;color:#1E40AF;margin-bottom:1.5rem;text-align:center;font-weight:800}
+        .section p{font-size:1rem;color:#475569;line-height:1.8;margin-bottom:1rem}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;margin:2rem 0}
+        .card{background:white;padding:2rem;border-radius:15px;box-shadow:0 4px 15px rgba(30,64,175,0.1);text-align:center;border-top:3px solid #06B6D4;transition:all 0.3s}
+        .card:hover{transform:translateY(-5px);box-shadow:0 8px 25px rgba(124,58,237,0.15)}
+        .card i{font-size:2.5rem;background:linear-gradient(135deg,#1E40AF,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1rem}
+        .card h3{font-size:1.2rem;color:#0F172A;margin-bottom:0.5rem}
+        .card p{color:#475569;font-size:0.95rem}
+        .timeline{position:relative;padding:2rem 0}
+        .timeline-item{display:flex;gap:2rem;margin-bottom:2rem}
+        .timeline-marker{width:40px;height:40px;background:linear-gradient(135deg,#1E40AF,#7C3AED);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;box-shadow:0 4px 12px rgba(30,64,175,0.3)}
+        .timeline-content{background:white;padding:1.5rem;border-radius:10px;box-shadow:0 2px 10px rgba(30,64,175,0.1)}
+        .timeline-content h4{color:#1E40AF;margin-bottom:0.5rem}
+        .timeline-content p{color:#475569}
+        .footer{background:linear-gradient(135deg,#0F172A 0%,#1E40AF 100%);color:white;padding:3rem 2rem;margin-top:4rem;box-shadow:0 -4px 15px rgba(30,64,175,0.1)}
+        .footer-content{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;margin-bottom:2rem}
+        .footer-section h3{margin-bottom:1rem;color:#06B6D4;font-weight:700}
+        .footer-section a{display:block;color:rgba(224,231,255,0.8);text-decoration:none;margin-bottom:0.5rem;transition:color 0.3s}
+        .footer-section a:hover{color:#06B6D4}
+        @media (max-width:768px){nav{flex-direction:column;gap:1rem}.nav-links{flex-wrap:wrap;justify-content:center}.hero h1{font-size:1.8rem}.timeline-item{flex-direction:column;gap:0.5rem}}
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo"><i class="fas fa-pills"></i> MediLocator</div>
+        <div class="nav-links">
+            <a href="{% url 'home' %}"><i class="fas fa-home"></i> Home</a>
+            <a href="{% url 'about_us' %}"><i class="fas fa-info-circle"></i> About</a>
+            <a href="{% url 'prescription_scanner' %}"><i class="fas fa-file-prescription"></i> Scanner</a>
+            {% if user.is_authenticated %}<a href="{% url 'logout' %}" class="btn-primary">Logout</a>{% else %}<a href="{% url 'login' %}" class="btn-primary">Login</a>{% endif %}
+        </div>
+    </nav>
+    <section class="hero"><h1>About MediLocator</h1><p>Your trusted partner in finding medicines easily and affordably</p></section>
+    <div class="container">
+        <section class="section">
+            <h2>Our Mission</h2>
+            <p>MediLocator aims to revolutionize how people find and access medicines. We believe everyone deserves easy, affordable access to quality medicines without hassle.</p>
+        </section>
+        <section class="section">
+            <h2>What We Offer</h2>
+            <div class="grid">
+                <div class="card"><i class="fas fa-search"></i><h3>Medicine Search</h3><p>Find medicines by name, composition, or condition instantly</p></div>
+                <div class="card"><i class="fas fa-map-location-dot"></i><h3>Pharmacy Locator</h3><p>Locate nearby pharmacies in real-time with directions</p></div>
+                <div class="card"><i class="fas fa-file-prescription"></i><h3>Prescription Scanner</h3><p>Upload prescriptions for instant medicine identification</p></div>
+                <div class="card"><i class="fas fa-map-marker-alt"></i><h3>Location Search</h3><p>Find pharmacies near your location instantly</p></div>
+            </div>
+        </section>
+        <section class="section">
+            <h2>Why Choose Us</h2>
+            <div class="grid">
+                <div class="card"><i class="fas fa-bolt"></i><h3>Fast Service</h3><p>Get results in seconds, not hours</p></div>
+                <div class="card"><i class="fas fa-shield"></i><h3>Secure & Safe</h3><p>Your data is encrypted and protected</p></div>
+                <div class="card"><i class="fas fa-check-circle"></i><h3>Accurate Info</h3><p>Real-time data from verified pharmacies</p></div>
+                <div class="card"><i class="fas fa-headset"></i><h3>24/7 Support</h3><p>We're always here to help</p></div>
+            </div>
+        </section>
+        <section class="section">
+            <h2>Our Journey</h2>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-marker">1</div><div class="timeline-content"><h4>Founded (2023)</h4><p>Started with a vision to make medicine search simple</p></div></div>
+                <div class="timeline-item"><div class="timeline-marker">2</div><div class="timeline-content"><h4>First Launch (2024)</h4><p>Launched our web platform with 5,000+ pharmacies</p></div></div>
+                <div class="timeline-item"><div class="timeline-marker">3</div><div class="timeline-content"><h4>AI Integration (2024)</h4><p>Added prescription scanner with AI technology</p></div></div>
+                <div class="timeline-item"><div class="timeline-marker">4</div><div class="timeline-content"><h4>Expansion (2025)</h4><p>Expanding to 50,000+ pharmacies nationwide</p></div></div>
+            </div>
+        </section>
+        <section class="section">
+            <h2>Contact Us</h2>
+            <p style="text-align:center"><strong>Email:</strong> support@medilocator.com | <strong>Phone:</strong> +91 9240250346 | <strong>Address:</strong> Mumbai, Maharashtra</p>
+        </section>
+    </div>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section"><h3>MediLocator</h3><p>Your trusted medicine search platform across India</p></div>
+            <div class="footer-section"><h3>Links</h3><a href="{% url 'home' %}">Home</a><a href="{% url 'about_us' %}">About</a><a href="{% url 'prescription_scanner' %}">Scanner</a></div>
+            <div class="footer-section"><h3>Services</h3><a href="#">Medicine Search</a><a href="#">Pharmacy Locator</a><a href="#">Medicine Information</a></div>
+            <div class="footer-section"><h3>Legal</h3><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div>
+        </div>
+    </footer>
+    {% include 'accounts/chatbot_widget.html' %}
+</body>
+</html>

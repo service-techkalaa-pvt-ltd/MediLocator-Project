@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Search - MediLocator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #1E40AF; margin-bottom: 20px; }
+        .search-box { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; }
+        button { padding: 15px 30px; background: #1E40AF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background: #1e3a8a; }
+        .results { background: white; padding: 20px; border-radius: 10px; }
+        .pharmacy-card { background: #f8f9fa; padding: 20px; margin-bottom: 15px; border-radius: 8px; border-left: 4px solid #1E40AF; }
+        .pharmacy-name { font-size: 1.2rem; font-weight: bold; color: #1E40AF; margin-bottom: 10px; }
+        .pharmacy-info { color: #666; margin-bottom: 5px; }
+        .rating { background: #FFA500; color: white; padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px; }
+        .medicines { margin-top: 10px; padding: 10px; background: white; border-radius: 5px; }
+        .medicine-item { padding: 8px; border-bottom: 1px solid #eee; }
+        .medicine-item:last-child { border-bottom: none; }
+        .status { padding: 15px; background: #e3f2fd; border-radius: 8px; margin-bottom: 20px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Medicine Search</h1>
+        
+        <div class="search-box">
+            <input type="text" id="medicineInput" placeholder="Enter medicine name (e.g., Paracetamol, Aspirin)" />
+            <button onclick="searchMedicine()">Search</button>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div class="results">
+            <h2>Search Results: <span id="count">0</span> pharmacies found</h2>
+            <div id="resultsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        function searchMedicine() {
+            const medicine = document.getElementById('medicineInput').value.trim();
+            
+            if (!medicine) {
+                showStatus('Please enter a medicine name', 'error');
+                return;
+            }
+
+            showStatus('Searching...', 'status');
+            
+            const url = `/api/search-medicines/?medicine=${encodeURIComponent(medicine)}`;
+            
+            console.log('Searching for:', medicine);
+            console.log('API URL:', url);
+
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('API error: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Response:', data);
+                    
+                    if (!data.success) {
+                        showStatus('API returned success=false', 'error');
+                        return;
+                    }
+
+                    if (!data.pharmacies || data.pharmacies.length === 0) {
+                        showStatus('No pharmacies found with this medicine', 'error');
+                        document.getElementById('count').textContent = '0';
+                        document.getElementById('resultsContainer').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No results found. Try a different medicine name.</p>';
+                        return;
+                    }
+
+                    // Success!
+                    showStatus(`Found ${data.total} pharmacies with ${medicine}`, 'success');
+                    document.getElementById('count').textContent = data.total;
+                    
+                    // Display results
+                    displayPharmacies(data.pharmacies);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showStatus('Error: ' + error.message, 'error');
+                    document.getElementById('count').textContent = '0';
+                    document.getElementById('resultsContainer').innerHTML = '';
+                });
+        }
+
+        function displayPharmacies(pharmacies) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+
+            pharmacies.forEach((pharmacy, index) => {
+                const card = document.createElement('div');
+                card.className = 'pharmacy-card';
+
+                let medicinesHtml = '';
+                if (pharmacy.available_medicines && pharmacy.available_medicines.length > 0) {
+                    medicinesHtml = '<div class="medicines"><strong>Available Medicines:</strong>';
+                    pharmacy.available_medicines.forEach(med => {
+                        medicinesHtml += `
+                            <div class="medicine-item">
+                                <strong>${med.name}</strong> - 
+                                Quantity: ${med.quantity} pcs - 
+                                Price: ₹${med.price}
+                            </div>
+                        `;
+                    });
+                    medicinesHtml += '</div>';
+                }
+
+                card.innerHTML = `
+                    <div class="pharmacy-name">${index + 1}. ${pharmacy.name}</div>
+                    <div class="rating">⭐ ${pharmacy.rating}</div>
+                    <div class="pharmacy-info">📍 ${pharmacy.address}, ${pharmacy.city}</div>
+                    <div class="pharmacy-info">📞 ${pharmacy.phone}</div>
+                    ${medicinesHtml}
+                `;
+
+                container.appendChild(card);
+            });
+
+            console.log(`Displayed ${pharmacies.length} pharmacy cards`);
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+            statusDiv.style.display = 'block';
+        }
+
+        // Allow Enter key to search
+        document.getElementById('medicineInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchMedicine();
+            }
+        });
+    </script>
+</body>
+</html>

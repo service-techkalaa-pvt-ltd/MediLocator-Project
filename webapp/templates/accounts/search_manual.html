@@ -1,0 +1,860 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Pharmacy Search - MediLocator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation */
+        nav {
+            background: linear-gradient(135deg, #0F172A 0%, #1E40AF 100%);
+            padding: 1rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #06B6D4 0%, #7C3AED 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #E0E7FF;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-links a:hover {
+            color: #06B6D4;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Header Section */
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.1);
+            border-left: 5px solid #1E40AF;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #0F172A;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header h1 i {
+            color: #7C3AED;
+            font-size: 2.2rem;
+        }
+
+        .header p {
+            color: #64748B;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        /* Main Form Card */
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.1);
+            border: 2px solid #E2E8F0;
+            transition: all 0.3s;
+        }
+
+        .form-card:hover {
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.15);
+            border-color: #7C3AED;
+        }
+
+        .form-card h2 {
+            font-size: 1.5rem;
+            color: #0F172A;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .form-group label .required {
+            color: #DC2626;
+            margin-left: 0.25rem;
+        }
+
+        .form-group .hint {
+            font-size: 0.85rem;
+            color: #64748B;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1E40AF;
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
+            background: #EFF6FF;
+        }
+
+        .form-group input::placeholder {
+            color: #94A3B8;
+        }
+
+        .form-group input.error,
+        .form-group select.error {
+            border-color: #DC2626;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+        }
+
+        .error-message {
+            color: #DC2626;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .success-message {
+            color: #16A34A;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Medicine Autocomplete Dropdown */
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #E2E8F0;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #F1F5F9;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background: #EFF6FF;
+        }
+
+        .autocomplete-item.selected {
+            background: #DBEAFE;
+            border-left: 3px solid #1E40AF;
+        }
+
+        .autocomplete-item-name {
+            font-weight: 600;
+            color: #1E40AF;
+            margin-bottom: 0.25rem;
+        }
+
+        .autocomplete-item-category {
+            font-size: 0.8rem;
+            color: #94A3B8;
+        }
+
+        /* Form Row for Two Columns */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        /* Buttons Container */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 50px;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1E40AF, #7C3AED);
+            color: white;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.2);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1E40AF;
+            border: 2px solid #1E40AF;
+        }
+
+        .btn-secondary:hover {
+            background: #EFF6FF;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading State */
+        .btn.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #DBEAFE 0%, #E0E7FF 100%);
+            border-left: 4px solid #1E40AF;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-box i {
+            color: #1E40AF;
+            font-size: 1.3rem;
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .info-box-content h4 {
+            color: #0F172A;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .info-box-content p {
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Example Cards */
+        .examples-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid #E2E8F0;
+        }
+
+        .examples-section h3 {
+            color: #0F172A;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .example-card {
+            background: #F8FAFC;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .example-card:hover {
+            border-color: #7C3AED;
+            background: #F0F4FF;
+            transform: translateY(-3px);
+        }
+
+        .example-card strong {
+            display: block;
+            color: #1E40AF;
+            margin-bottom: 0.5rem;
+        }
+
+        .example-card span {
+            color: #64748B;
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, #0F172A 0%, #1E40AF 100%);
+            color: white;
+            padding: 2rem;
+            margin-top: auto;
+            text-align: center;
+            box-shadow: 0 -4px 15px rgba(30, 64, 175, 0.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                flex: none;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <a href="{% url 'home' %}" class="logo">
+            <i class="fas fa-pills"></i>
+            <span>MediLocator</span>
+        </a>
+        <div class="nav-links">
+            <a href="{% url 'home' %}"><i class="fas fa-home"></i> Home</a>
+            <a href="{% url 'about_us' %}"><i class="fas fa-info-circle"></i> About</a>
+            <a href="{% url 'prescription_scanner' %}"><i class="fas fa-file-prescription"></i> Prescription Scanner</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-map-location-dot"></i>
+                Manual Pharmacy Search
+            </h1>
+            <p>Search for pharmacies by entering your location manually and the medicine you need. We'll show you the nearest pharmacies with availability, distance, and live ratings.</p>
+        </div>
+
+        <!-- Search Form Card -->
+        <div class="form-card">
+            <h2>
+                <i class="fas fa-search"></i>
+                Search Form
+            </h2>
+
+            <form id="manualSearchForm">
+                <!-- Medicine Name Input -->
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-pills"></i> Medicine Name <span class="required">*</span>
+                    </label>
+                    <div class="autocomplete-container">
+                        <input 
+                            type="text" 
+                            id="medicineName" 
+                            placeholder="Start typing (e.g., Paracetamol, Aspirin, Cough Syrup)"
+                            required
+                            autocomplete="off"
+                            oninput="handleMedicineInput(this.value)"
+                        >
+                        <div id="medicineDropdown" class="autocomplete-dropdown"></div>
+                    </div>
+                    <div class="hint">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>Start typing to see suggestions from our database</span>
+                    </div>
+                    <div id="medicineError" class="error-message" style="display: none;"></div>
+                </div>
+
+                <!-- Location Section -->
+                <div class="form-row">
+                    <!-- Address Input -->
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-home"></i> Address <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="address" 
+                            placeholder="Enter street address or area name"
+                            required
+                        >
+                        <div class="hint">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>e.g., 'MG Road', '123 Main Street'</span>
+                        </div>
+                        <div id="addressError" class="error-message" style="display: none;"></div>
+                    </div>
+
+                    <!-- PIN Code Input -->
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-map-pin"></i> PIN Code / Postal Code <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="pinCode" 
+                            placeholder="Enter 5-6 digit PIN code"
+                            required
+                        >
+                        <div class="hint">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>e.g., '400001' or '560001'</span>
+                        </div>
+                        <div id="pinError" class="error-message" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- City Input -->
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-city"></i> City <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="city" 
+                        placeholder="Enter city name (e.g., Pune, Mumbai, Delhi)"
+                        required
+                    >
+                    <div class="hint">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>The city where you want to search for pharmacies</span>
+                    </div>
+                    <div id="cityError" class="error-message" style="display: none;"></div>
+                </div>
+
+                <!-- Search Radius -->
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-ruler"></i> Search Radius
+                    </label>
+                    <select id="searchRadius">
+                        <option value="5">Within 5 km</option>
+                        <option value="10" selected>Within 10 km</option>
+                        <option value="15">Within 15 km</option>
+                        <option value="20">Within 20 km</option>
+                        <option value="25">Within 25 km</option>
+                    </select>
+                    <div class="hint">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>How far from your location to search</span>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="info-box-content">
+                        <h4>How We Show Results</h4>
+                        <p>We'll find pharmacies near your location that have the medicine you're looking for, sorted by: <strong>1) Medicine Availability</strong> → <strong>2) Distance</strong> → <strong>3) Live Ratings from Google</strong></p>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-search"></i>
+                        <span>Search Pharmacies</span>
+                    </button>
+                    <button type="reset" class="btn btn-secondary" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span>Clear Form</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Examples Section -->
+            <div class="examples-section">
+                <h3>
+                    <i class="fas fa-star"></i>
+                    Popular Searches
+                </h3>
+                <div class="examples-grid">
+                    <div class="example-card" onclick="fillExample('Paracetamol', 'Bund Garden', '411001', 'Pune')">
+                        <strong>💊 Paracetamol</strong>
+                        <span>Bund Garden, Pune</span>
+                    </div>
+                    <div class="example-card" onclick="fillExample('Amoxicillin', 'Marine Drive', '400020', 'Mumbai')">
+                        <strong>💊 Amoxicillin</strong>
+                        <span>Marine Drive, Mumbai</span>
+                    </div>
+                    <div class="example-card" onclick="fillExample('Ibuprofen', 'Koregaon Park', '411001', 'Pune')">
+                        <strong>💊 Ibuprofen</strong>
+                        <span>Koregaon Park, Pune</span>
+                    </div>
+                    <div class="example-card" onclick="fillExample('Cough Syrup', 'Andheri East', '400069', 'Mumbai')">
+                        <strong>💊 Cough Syrup</strong>
+                        <span>Andheri East, Mumbai</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 MediLocator. All rights reserved. | Find medicines near you with confidence.</p>
+    </footer>
+
+    <script>
+        // Medicine autocomplete
+        let medicineCache = {};
+        let autocompleteTimeout;
+
+        function handleMedicineInput(value) {
+            clearTimeout(autocompleteTimeout);
+            
+            if (value.length < 2) {
+                document.getElementById('medicineDropdown').classList.remove('show');
+                return;
+            }
+
+            autocompleteTimeout = setTimeout(() => {
+                fetchMedicineSuggestions(value);
+            }, 300);
+        }
+
+        function fetchMedicineSuggestions(searchTerm) {
+            const url = `/api/get-medicines/?search=${encodeURIComponent(searchTerm)}&limit=8`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.medicines && data.medicines.length > 0) {
+                        displayMedicineSuggestions(data.medicines);
+                    } else {
+                        document.getElementById('medicineDropdown').classList.remove('show');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching medicines:', error);
+                });
+        }
+
+        function displayMedicineSuggestions(medicines) {
+            const dropdown = document.getElementById('medicineDropdown');
+            dropdown.innerHTML = '';
+
+            medicines.forEach((med, index) => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item';
+                div.innerHTML = `
+                    <div class="autocomplete-item-name">💊 ${med.name}</div>
+                    <div class="autocomplete-item-category">${med.category || 'Medicine'}</div>
+                `;
+                div.addEventListener('click', () => {
+                    document.getElementById('medicineName').value = med.name;
+                    dropdown.classList.remove('show');
+                });
+                dropdown.appendChild(div);
+            });
+
+            dropdown.classList.add('show');
+        }
+
+        // Fill example form
+        function fillExample(medicine, address, pin, city) {
+            document.getElementById('medicineName').value = medicine;
+            document.getElementById('address').value = address;
+            document.getElementById('pinCode').value = pin;
+            document.getElementById('city').value = city;
+        }
+
+        // Form validation and submission
+        document.getElementById('manualSearchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get values
+            const medicine = document.getElementById('medicineName').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const pinCode = document.getElementById('pinCode').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const radius = document.getElementById('searchRadius').value;
+
+            // Validation
+            let isValid = true;
+
+            if (!medicine) {
+                showError('medicineError', 'Please enter a medicine name');
+                document.getElementById('medicineName').classList.add('error');
+                isValid = false;
+            } else {
+                clearError('medicineError');
+                document.getElementById('medicineName').classList.remove('error');
+            }
+
+            if (!address) {
+                showError('addressError', 'Please enter an address');
+                document.getElementById('address').classList.add('error');
+                isValid = false;
+            } else {
+                clearError('addressError');
+                document.getElementById('address').classList.remove('error');
+            }
+
+            if (!pinCode || !/^\d{5,6}$/.test(pinCode)) {
+                showError('pinError', 'Please enter a valid 5-6 digit PIN code');
+                document.getElementById('pinCode').classList.add('error');
+                isValid = false;
+            } else {
+                clearError('pinError');
+                document.getElementById('pinCode').classList.remove('error');
+            }
+
+            if (!city) {
+                showError('cityError', 'Please enter a city name');
+                document.getElementById('city').classList.add('error');
+                isValid = false;
+            } else {
+                clearError('cityError');
+                document.getElementById('city').classList.remove('error');
+            }
+
+            if (!isValid) return;
+
+            // Show loading
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+
+            try {
+                // Call API with manual location
+                const fullLocation = `${address}, ${city} ${pinCode}`;
+                const response = await fetch(`/api/search-manual/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        medicine_name: medicine,
+                        address: fullLocation,
+                        radius: parseInt(radius),
+                        city: city  // Pass city parameter
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to results page with city parameter
+                    const params = new URLSearchParams({
+                        medicine: medicine,
+                        lat: data.latitude,
+                        lon: data.longitude,
+                        radius: radius,
+                        city: city,  // Include city in URL
+                        mode: 'manual'
+                    });
+                    window.location.href = `/search-results/?${params.toString()}`;
+                } else {
+                    showError('medicineError', data.error || 'Search failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('medicineError', 'Network error. Please check your connection and try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+            }
+        });
+
+        // Helper functions
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'flex';
+        }
+
+        function clearError(elementId) {
+            const element = document.getElementById(elementId);
+            element.textContent = '';
+            element.style.display = 'none';
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'medicineName') {
+                document.getElementById('medicineDropdown').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

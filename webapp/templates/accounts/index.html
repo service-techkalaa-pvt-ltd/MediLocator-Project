@@ -1,0 +1,1163 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediLocator - Find Medicines Near You</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #F8FAFC;
+        }
+
+        /* Navigation */
+        nav {
+            background: linear-gradient(135deg, #0F172A 0%, #1E40AF 100%);
+            padding: 1rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #06B6D4 0%, #7C3AED 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #E0E7FF;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-links a:hover {
+            color: #06B6D4;
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
+            color: white !important;
+            padding: 0.7rem 1.8rem;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #1E40AF 0%, #7C3AED 50%, #06B6D4 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 900;
+        }
+
+        .hero p {
+            font-size: 1rem;
+            opacity: 0.95;
+        }
+
+        /* Search Section */
+        .search-wrapper {
+            max-width: 100%;
+            margin: -2rem auto 0;
+            padding: 2rem 2rem;
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(135deg, #1E40AF 0%, #7C3AED 100%);
+        }
+
+        .search-card {
+            background: transparent;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .search-card h3 {
+            font-size: 1.3rem;
+            color: white;
+            margin-bottom: 1.5rem;
+            font-weight: 800;
+        }
+
+        .search-inputs {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .location-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .location-btn {
+            padding: 0.75rem 1rem;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .location-btn:hover {
+            border-color: #1E40AF;
+            background: #EFF6FF;
+        }
+
+        .location-btn.active {
+            background: linear-gradient(135deg, #1E40AF, #7C3AED);
+            color: white;
+            border-color: #1E40AF;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group input {
+            padding: 0.75rem 1rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #1E40AF;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .input-group input:disabled {
+            background: #F1F5F9;
+            cursor: not-allowed;
+        }
+
+        .search-btn {
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #1E40AF, #7C3AED);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.2);
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Main Content */
+        .content {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Promo Cards */
+        .promo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .promo-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            transition: all 0.3s;
+            border: 1px solid #E2E8F0;
+        }
+
+        .promo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.15);
+        }
+
+        .promo-card.pink {
+            background: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
+            color: white;
+            border: none;
+        }
+
+        .promo-card.teal {
+            background: linear-gradient(135deg, #06B6D4 0%, #10B981 100%);
+            color: white;
+            border: none;
+        }
+
+        .promo-card.green {
+            background: linear-gradient(135deg, #10B981 0%, #1E40AF 100%);
+            color: white;
+            border: none;
+        }
+
+        .promo-content {
+            flex: 1;
+        }
+
+        .promo-content h3 {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .promo-content h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .promo-btn {
+            padding: 0.6rem 1.5rem;
+            background: rgba(255,255,255,0.95);
+            color: #1E40AF;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .promo-btn:hover {
+            background: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .promo-icon {
+            font-size: 3rem;
+            opacity: 0.3;
+        }
+
+        /* CTA Section */
+        .cta {
+            background: linear-gradient(135deg, #1E40AF 0%, #7C3AED 50%, #06B6D4 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.2);
+            color: white;
+        }
+
+        .cta-icon {
+            font-size: 3rem;
+            color: #06B6D4;
+            opacity: 0.9;
+        }
+
+        .cta-content {
+            flex: 1;
+        }
+
+        .cta-content h3 {
+            font-size: 1rem;
+            color: #E0E7FF;
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-phone {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #06B6D4;
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-hours {
+            color: #E0E7FF;
+            font-size: 0.9rem;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            margin: 3rem 0;
+        }
+
+        .testimonials h2 {
+            font-size: 1.8rem;
+            color: #0F172A;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.1);
+            text-align: center;
+            border-left: 4px solid #7C3AED;
+            transition: all 0.3s;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.15);
+        }
+
+        .testimonial-stars {
+            color: #F59E0B;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .testimonial-text {
+            color: #475569;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: #1E40AF;
+        }
+
+        /* FAQ */
+        .faq {
+            margin: 3rem 0;
+        }
+
+        .faq h2 {
+            font-size: 1.8rem;
+            color: #0F172A;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .faq-item {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.1);
+            border-top: 3px solid #06B6D4;
+            transition: all 0.3s;
+        }
+
+        .faq-item:hover {
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.15);
+        }
+
+        .faq-item h4 {
+            color: #1E40AF;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .faq-item p {
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, #0F172A 0%, #1E40AF 100%);
+            color: white;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+            box-shadow: 0 -4px 15px rgba(30, 64, 175, 0.1);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #06B6D4;
+            font-weight: 700;
+        }
+
+        .footer-section a {
+            display: block;
+            color: rgba(224, 231, 255, 0.8);
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: #06B6D4;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .search-inputs {
+                grid-template-columns: 1fr 1fr;
+            }
+            .search-btn {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .search-inputs {
+                grid-template-columns: 1fr;
+            }
+            .promo-grid {
+                grid-template-columns: 1fr;
+            }
+            .promo-card {
+                flex-direction: column;
+            }
+            .cta {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            <i class="fas fa-pills"></i>
+            <span>MediLocator</span>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'home' %}"><i class="fas fa-home"></i> Home</a>
+            <a href="{% url 'about_us' %}"><i class="fas fa-info-circle"></i> About</a>
+            <a href="{% url 'prescription_scanner' %}"><i class="fas fa-file-prescription"></i> Prescription Scanner</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn-logout"><i class="fas fa-sign-in-alt"></i> Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Find Medical Stores Near You</h1>
+        <p>Search and locate medical stores by location, medicine availability & compare</p>
+    </section>
+
+    <!-- Search Section - Simple Like Amazon -->
+    <div class="search-wrapper">
+        <div class="search-card">
+            <h3><i class="fas fa-search"></i> Search Pharmacies or Medicines</h3>
+            
+            <div class="search-inputs">
+                <!-- Search with Location Button on Left and Search Button on Right -->
+                <div style="display: flex; gap: 1rem; width: 100%; max-width: 1000px; align-items: center; justify-content: center;">
+                    <!-- Location Button (Left) -->
+                    <button class="location-search-btn" onclick="useLocationSearch()" style="padding: 1.2rem 2rem; border-radius: 8px; white-space: nowrap; background: white; color: #1E40AF; border: 2px solid white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <i class="fas fa-map-pin"></i> Location
+                    </button>
+
+                    <!-- Main Search Input (Center) -->
+                    <div style="position: relative; flex: 1; display: flex; align-items: center; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); min-height: 56px;">
+                        <input type="text" id="simple-search-input" placeholder="Search by City (e.g., Bhopal) or Medicine (e.g., Paracetamol)" 
+                               style="flex: 1; padding: 1.2rem 1.5rem; border: none; font-size: 1.1rem; outline: none;"
+                               oninput="handleSimpleSearch(this.value)"
+                               onkeypress="if(event.key==='Enter') performSimpleSearch()">
+                        
+                        <!-- Dropdown for suggestions -->
+                        <div id="simple-search-suggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #E2E8F0; border-top: none; border-radius: 0 0 8px 8px; max-height: 300px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></div>
+                    </div>
+
+                    <!-- Search Button (Right) -->
+                    <button class="search-btn" onclick="performSimpleSearch()" style="padding: 1.2rem 2.5rem; border-radius: 8px; white-space: nowrap; font-size: 1rem;">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Promo Cards - Manual and GPS Search Options -->
+        <div class="promo-grid">
+            <!-- Manual Search Card -->
+            <div class="promo-card pink">
+                <div class="promo-content">
+                    <h3><i class="fas fa-map-location-dot"></i> Manual Search</h3>
+                    <h2>Enter Location Manually</h2>
+                    <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.9); font-size: 0.95rem;">Enter medicine name + address/PIN code to find nearby pharmacies</p>
+                    <a href="{% url 'search_manual_page' %}" class="promo-btn" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fas fa-pen"></i> Start Searching
+                    </a>
+                </div>
+                <i class="fas fa-hospital promo-icon"></i>
+            </div>
+            <!-- GPS Search Card -->
+            <div class="promo-card teal">
+                <div class="promo-content">
+                    <h3><i class="fas fa-location-crosshairs"></i> GPS Search</h3>
+                    <h2>Use Device Location</h2>
+                    <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.9); font-size: 0.95rem;">Allow GPS access to auto-detect your location and find nearby pharmacies</p>
+                    <a href="{% url 'search_gps_page' %}" class="promo-btn" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fas fa-crosshairs"></i> Start Searching
+                    </a>
+                </div>
+                <i class="fas fa-map-pin promo-icon"></i>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="cta">
+            <i class="fas fa-map-location-dot cta-icon"></i>
+            <div class="cta-content">
+                <h3>Need Help Finding a Medical Store?</h3>
+                <div class="cta-phone">9240250346</div>
+                <p class="cta-hours">Available: 8:00 AM to 10:00 PM</p>
+            </div>
+        </div>
+
+        <!-- Testimonials -->
+        <section class="testimonials">
+            <h2>What Our Users Say</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Found the nearest medical store in seconds! MediLocator saved my time during emergencies.</p>
+                    <p class="testimonial-author">- Priya Mehta</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Best medical store locator app. Easy to search by location and medicine name.</p>
+                    <p class="testimonial-author">- Subhash Sehgal</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Very accurate and helpful. Shows all nearby pharmacies with their details.</p>
+                    <p class="testimonial-author">- Snehal Shah</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Excellent search experience. Found the right medicine store instantly!</p>
+                    <p class="testimonial-author">- Laksh Kankariya</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section class="faq">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h4><i class="fas fa-question-circle"></i> How do I search for medical stores?</h4>
+                    <p>Enter your location (auto-detected or manual), select a medicine name, and click "Search Stores" to find all available medical stores near you.</p>
+                </div>
+                <div class="faq-item">
+                    <h4><i class="fas fa-question-circle"></i> Can I search by location?</h4>
+                    <p>Yes! Use the automatic GPS detection or manually enter your address/PIN code to find medical stores in your area.</p>
+                </div>
+                <div class="faq-item">
+                    <h4><i class="fas fa-question-circle"></i> Is my location data safe?</h4>
+                    <p>Absolutely! Your location is only used to find nearby stores and is not stored or shared with third parties.</p>
+                </div>
+                <div class="faq-item">
+                    <h4><i class="fas fa-question-circle"></i> How accurate is the store information?</h4>
+                    <p>Our database is updated in real-time with verified medical stores. Contact them directly to confirm stock availability.</p>
+                </div>
+                <div class="faq-item">
+                    <h4><i class="fas fa-question-circle"></i> Can I find medicine availability?</h4>
+                    <p>Yes, search for specific medicines and find which nearby stores have them in stock.</p>
+                </div>
+                <div class="faq-item">
+                    <h4><i class="fas fa-question-circle"></i> What payment methods are accepted?</h4>
+                    <p>Contact the medical stores directly through our app for payment methods and purchasing details.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>MediLocator</h3>
+                <p>Your trusted platform to find medical stores and locate medicines near you across India.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="{% url 'home' %}">Home</a>
+                <a href="{% url 'about_us' %}">About Us</a>
+                <a href="{% url 'prescription_scanner' %}">Prescription Scanner</a>
+                <a href="{% url 'feedback' %}">Feedback</a>
+            </div>
+            <div class="footer-section">
+                <h3>Services</h3>
+                <a href="#">Medical Store Locator</a>
+                <a href="#">Find Pharmacies</a>
+                <a href="#">Medicine Availability</a>
+                <a href="#">Location Search</a>
+            </div>
+            <div class="footer-section">
+                <h3>Legal</h3>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+            </div>
+        </div>
+    </footer>
+
+    {% include 'accounts/chatbot_widget.html' %}
+
+    <script>
+        // Search Mode Management
+        let searchMode = 'both'; // 'both', 'location', 'medicine'
+        let currentMode = 'auto'; // 'auto' or 'manual'
+
+        function switchSearchMode(mode) {
+            searchMode = mode;
+            
+            // Update button styles
+            document.querySelectorAll('.search-mode-btn').forEach(btn => {
+                btn.style.background = 'white';
+                btn.style.color = '#1E40AF';
+            });
+            
+            const activeBtn = event.target.closest('button');
+            activeBtn.style.background = 'linear-gradient(135deg, #1E40AF, #7C3AED)';
+            activeBtn.style.color = 'white';
+
+            // Update required field indicators
+            if (mode === 'both') {
+                document.getElementById('location-required').style.display = 'inline';
+                document.getElementById('medicine-required').style.display = 'inline';
+                document.getElementById('address-required').style.display = 'inline';
+                document.getElementById('search-btn').textContent = '🔍 Search Stores';
+            } else if (mode === 'location') {
+                document.getElementById('location-required').style.display = 'inline';
+                document.getElementById('medicine-required').style.display = 'none';
+                document.getElementById('address-required').style.display = 'inline';
+                document.getElementById('search-btn').textContent = '📍 Find Nearby Stores';
+            } else if (mode === 'medicine') {
+                document.getElementById('location-required').style.display = 'none';
+                document.getElementById('medicine-required').style.display = 'inline';
+                document.getElementById('address-required').style.display = 'none';
+                document.getElementById('search-btn').textContent = '💊 Find in All Stores';
+            }
+        }
+
+        // Location Handling System
+        // AUTOMATIC - GPS Location Detection
+        function useAutomaticLocation() {
+            currentMode = 'auto';
+            document.getElementById('auto-loc-btn').classList.add('active');
+            document.getElementById('manual-loc-btn').classList.remove('active');
+            document.getElementById('location-input').readOnly = true;
+            document.getElementById('location-input').value = 'Getting location...';
+            document.getElementById('location-input').style.background = '#f5f5f5';
+
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        
+                        // Convert coordinates to address using reverse geocoding (Google Maps API)
+                        getAddressFromCoordinates(lat, lon);
+                    },
+                    function(error) {
+                        document.getElementById('location-input').value = 'Location access denied';
+                        console.error('Geolocation error:', error);
+                    }
+                );
+            } else {
+                document.getElementById('location-input').value = 'GPS not supported';
+                alert('Geolocation is not supported by your browser. Please use Manual mode.');
+            }
+        }
+
+        // Convert coordinates to address
+        function getAddressFromCoordinates(lat, lon) {
+            // Store coordinates for search
+            storeCoordinates(lat, lon);
+            
+            // Using Nominatim OpenStreetMap API (free, no API key needed)
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const address = data.address;
+                    // Get city or town or village
+                    const city = address.city || address.town || address.village || 'Unknown Location';
+                    const state = address.state || '';
+                    const pincode = address.postcode || '';
+                    
+                    const fullAddress = `${city}${state ? ', ' + state : ''}${pincode ? ' - ' + pincode : ''}`;
+                    document.getElementById('location-input').value = fullAddress;
+                })
+                .catch(error => {
+                    // Fallback to coordinates
+                    document.getElementById('location-input').value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                    console.error('Geocoding error:', error);
+                });
+        }
+
+        // MANUAL - User Types Address/PIN Code
+        function useManualLocation() {
+            currentMode = 'manual';
+            document.getElementById('manual-loc-btn').classList.add('active');
+            document.getElementById('auto-loc-btn').classList.remove('active');
+            document.getElementById('location-input').readOnly = false;
+            document.getElementById('location-input').value = '';
+            document.getElementById('location-input').style.background = 'white';
+            document.getElementById('location-input').placeholder = 'Enter address or PIN code (e.g., Mumbai 400001)';
+            document.getElementById('location-input').focus();
+        }
+
+        // Search Medicines
+        let currentLat = null;
+        let currentLon = null;
+
+        function searchMedicines() {
+            const location = document.getElementById('location-input').value.trim();
+            const medicine = document.getElementById('medicine-input').value.trim();
+
+            // Validation based on search mode
+            if (searchMode === 'both') {
+                if (!location) {
+                    alert('Please select or enter a location');
+                    return;
+                }
+                if (!medicine) {
+                    alert('Please enter a medicine name');
+                    return;
+                }
+                // Both provided - search with both filters
+                if (currentMode === 'auto' && currentLat && currentLon) {
+                    performPharmacySearch(currentLat, currentLon, medicine);
+                } else if (currentMode === 'manual') {
+                    geocodeManualAddress(location, medicine);
+                } else {
+                    alert('Please enable location or enter address');
+                }
+            } else if (searchMode === 'location') {
+                if (!location) {
+                    alert('Please select or enter a location');
+                    return;
+                }
+                // Location only - search all stores near location
+                if (currentMode === 'auto' && currentLat && currentLon) {
+                    performPharmacySearchByLocation(currentLat, currentLon);
+                } else if (currentMode === 'manual') {
+                    geocodeAndSearchByLocation(location);
+                } else {
+                    alert('Please enable location or enter address');
+                }
+            } else if (searchMode === 'medicine') {
+                if (!medicine) {
+                    alert('Please enter a medicine name');
+                    return;
+                }
+                // Medicine only - search all stores with this medicine
+                performMedicineSearch(medicine);
+            }
+        }
+
+        // Search by location only - all nearby pharmacies
+        function performPharmacySearchByLocation(lat, lon) {
+            const radius = 10;
+            const resultUrl = `/search-results/?lat=${lat}&lon=${lon}&radius=${radius}&mode=location`;
+            window.location.href = resultUrl;
+        }
+
+        // Geocode and search by location only
+        function geocodeAndSearchByLocation(address) {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        performPharmacySearchByLocation(lat, lon);
+                    } else {
+                        alert('Could not find coordinates for this address. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    alert('Error searching location: ' + error.message);
+                    console.error('Geocoding error:', error);
+                });
+        }
+
+        // Search by medicine only - all stores with this medicine
+        function performMedicineSearch(medicine) {
+            const resultUrl = `/search-results/?medicine=${encodeURIComponent(medicine)}&mode=medicine`;
+            window.location.href = resultUrl;
+        }
+
+        // Geocode manual address to get coordinates
+        function geocodeManualAddress(address, medicine) {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        performPharmacySearch(lat, lon, medicine);
+                    } else {
+                        alert('Could not find coordinates for this address. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    alert('Error geocoding address: ' + error.message);
+                    console.error('Geocoding error:', error);
+                });
+        }
+
+        // Perform actual pharmacy search via API and redirect to results page
+        function performPharmacySearch(lat, lon, medicine) {
+            const radius = 10; // 10 km radius
+            
+            // Redirect to search results page with parameters
+            const resultUrl = `/search-results/?lat=${lat}&lon=${lon}&radius=${radius}&medicine=${encodeURIComponent(medicine)}&mode=both`;
+            window.location.href = resultUrl;
+        }
+
+        // Store coordinates when GPS is detected
+        function storeCoordinates(lat, lon) {
+            currentLat = lat;
+            currentLon = lon;
+        }
+
+        // Medicine Autocomplete
+        let medicineCache = {};
+        let autocompleteTimeout;
+
+        function handleMedicineInput(value) {
+            clearTimeout(autocompleteTimeout);
+            
+            if (value.length < 2) {
+                document.getElementById('medicine-suggestions').style.display = 'none';
+                return;
+            }
+
+            autocompleteTimeout = setTimeout(() => {
+                fetchMedicineSuggestions(value);
+            }, 300);  // Debounce 300ms
+        }
+
+        function fetchMedicineSuggestions(searchTerm) {
+            const url = `/api/get-medicines/?search=${encodeURIComponent(searchTerm)}&limit=8`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.medicines && data.medicines.length > 0) {
+                        displayMedicineSuggestions(data.medicines);
+                    } else {
+                        document.getElementById('medicine-suggestions').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching medicines:', error);
+                    document.getElementById('medicine-suggestions').style.display = 'none';
+                });
+        }
+
+        function displayMedicineSuggestions(medicines) {
+            const suggestionsDiv = document.getElementById('medicine-suggestions');
+            suggestionsDiv.innerHTML = '';
+
+            medicines.forEach(med => {
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    padding: 0.75rem 1rem;
+                    border-bottom: 1px solid #E2E8F0;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    background: white;
+                `;
+                div.innerHTML = `
+                    <div style="font-weight: 600; color: #1E40AF;">${med.name}</div>
+                    <div style="font-size: 0.8rem; color: #94A3B8;">${med.category || 'Medicine'}</div>
+                `;
+
+                div.addEventListener('mouseover', () => {
+                    div.style.background = '#F0F4FF';
+                });
+                div.addEventListener('mouseout', () => {
+                    div.style.background = 'white';
+                });
+
+                div.addEventListener('click', () => {
+                    document.getElementById('medicine-input').value = med.name;
+                    suggestionsDiv.style.display = 'none';
+                });
+
+                suggestionsDiv.appendChild(div);
+            });
+
+            suggestionsDiv.style.display = 'block';
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'medicine-input') {
+                document.getElementById('medicine-suggestions').style.display = 'none';
+            }
+        });
+
+        // ===== SIMPLE SEARCH FUNCTIONS (NEW) =====
+        // Handle simple search input
+        function handleSimpleSearch(value) {
+            if (value.length < 2) {
+                document.getElementById('simple-search-suggestions').style.display = 'none';
+                return;
+            }
+
+            // Search for cities and medicines
+            searchCitiesAndMedicines(value);
+        }
+
+        // Search for matching cities and medicines
+        async function searchCitiesAndMedicines(searchTerm) {
+            const suggestionsDiv = document.getElementById('simple-search-suggestions');
+            suggestionsDiv.innerHTML = '';
+            
+            try {
+                // Search for medicines
+                const medicineUrl = `/api/get-medicines/?search=${encodeURIComponent(searchTerm)}&limit=5`;
+                const medResponse = await fetch(medicineUrl);
+                const medData = await medResponse.json();
+
+                // Clear and rebuild suggestions
+                let html = '';
+
+                // Add medicine results
+                if (medData.medicines && medData.medicines.length > 0) {
+                    html += '<div style="padding: 0.5rem 1rem; background: #F0F4FF; font-weight: 600; color: #1E40AF; font-size: 0.85rem;">📊 MEDICINES</div>';
+                    medData.medicines.forEach(med => {
+                        html += `
+                            <div onclick="quickSearchMedicine('${med.name}')" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #E2E8F0; transition: all 0.2s;" onmouseover="this.style.background='#F0F4FF'" onmouseout="this.style.background='white'">
+                                <div style="font-weight: 600; color: #1E40AF;">💊 ${med.name}</div>
+                                <div style="font-size: 0.8rem; color: #94A3B8;">Find in pharmacies nationwide</div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Add city search suggestion
+                html += `
+                    <div style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #E2E8F0; transition: all 0.2s; background: #F8FAFC;" onmouseover="this.style.background='#EFF6FF'" onmouseout="this.style.background='#F8FAFC'">
+                        <div style="font-weight: 600; color: #1E40AF;">🏙️ Search "${searchTerm}" as City</div>
+                        <div style="font-size: 0.8rem; color: #94A3B8;">Find all pharmacies in this city by rating</div>
+                    </div>
+                `;
+
+                suggestionsDiv.innerHTML = html;
+                suggestionsDiv.style.display = 'block';
+
+                // Add click handler for city search
+                suggestionsDiv.querySelector('div:last-child').addEventListener('click', () => {
+                    quickSearchCity(searchTerm);
+                });
+
+            } catch (error) {
+                console.error('Error fetching suggestions:', error);
+            }
+        }
+
+        // Quick search by medicine - shows all pharmacies with this medicine
+        function quickSearchMedicine(medicineName) {
+            const resultUrl = `/search-results/?medicine=${encodeURIComponent(medicineName)}&mode=medicine`;
+            window.location.href = resultUrl;
+        }
+
+        // Quick search by city - shows all pharmacies in city sorted by rating
+        function quickSearchCity(cityName) {
+            const resultUrl = `/search-results/?city=${encodeURIComponent(cityName)}&mode=city`;
+            window.location.href = resultUrl;
+        }
+
+        // Perform simple search
+        function performSimpleSearch() {
+            const searchTerm = document.getElementById('simple-search-input').value.trim();
+            
+            if (!searchTerm) {
+                alert('Please enter a city name or medicine name');
+                return;
+            }
+
+            // Try to detect if it's a medicine or city
+            // For now, treat as city search (user can select from suggestions)
+            quickSearchCity(searchTerm);
+        }
+
+        // Location Search Function (NEW)
+        function useLocationSearch() {
+            // Get user's current location using GPS
+            if ('geolocation' in navigator) {
+                // Show loading message
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting Location...';
+                btn.disabled = true;
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const radius = 10; // 10 km radius
+                        
+                        console.log('Location obtained:', lat, lon);
+                        
+                        // Redirect to search results with location mode
+                        const resultUrl = `/search-results/?lat=${lat}&lon=${lon}&radius=${radius}&mode=location`;
+                        window.location.href = resultUrl;
+                    },
+                    function(error) {
+                        // Reset button
+                        const btn = event.target.closest('button');
+                        btn.innerHTML = '<i class="fas fa-map-pin"></i> Location';
+                        btn.disabled = false;
+                        
+                        console.error('Location error:', error);
+                        
+                        // Show user-friendly error
+                        if (error.code === error.PERMISSION_DENIED) {
+                            alert('📍 Location permission denied. Please enable location access in your browser settings.');
+                        } else if (error.code === error.POSITION_UNAVAILABLE) {
+                            alert('📍 Location information is unavailable. Please try again or use City/Medicine search.');
+                        } else if (error.code === error.TIMEOUT) {
+                            alert('📍 Location request timed out. Please try again.');
+                        } else {
+                            alert('📍 Error getting location. Please try again or use City/Medicine search.');
+                        }
+                    },
+                    {
+                        timeout: 10000,  // 10 seconds timeout
+                        maximumAge: 0,   // Don't use cached position
+                        enableHighAccuracy: true
+                    }
+                );
+            } else {
+                alert('📍 Geolocation is not supported by your browser. Please use City or Medicine search instead.');
+            }
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'simple-search-input') {
+                document.getElementById('simple-search-suggestions').style.display = 'none';
+            }
+        });
+
+        // Initialize with auto location on page load
+        window.addEventListener('load', function() {
+            useAutomaticLocation();
+        });
+    </script>
+</body>
+</html>
