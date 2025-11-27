@@ -36,75 +36,8 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="container flex justify-between items-center">
-            <a href="{% url 'home' %}" class="navbar-brand">
-                <i class="fas fa-pills"></i> MediLocator
-            </a>
-            
-            <div class="flex items-center gap-lg">
-                <ul class="navbar-nav" style="margin: 0;">
-                    {% if user.is_authenticated %}
-                        <li><a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                            <i class="fas fa-home"></i> Home
-                        </a></li>
-                        <li><a href="{% url 'prescription_scanner' %}" class="nav-link {% if request.resolver_match.url_name == 'prescription_scanner' %}active{% endif %}">
-                            <i class="fas fa-file-prescription"></i> Upload Prescription
-                        </a></li>
-                        <li><a href="{% url 'chatbot' %}" class="nav-link {% if request.resolver_match.url_name == 'chatbot' %}active{% endif %}">
-                            <i class="fas fa-comments"></i> Chatbot
-                        </a></li>
-                        <li><a href="{% url 'about_us' %}" class="nav-link {% if request.resolver_match.url_name == 'about_us' %}active{% endif %}">
-                            <i class="fas fa-info-circle"></i> About
-                        </a></li>
-                        
-                        <!-- User Profile Dropdown -->
-                        <li class="dropdown">
-                            <button class="btn btn-secondary btn-sm" onclick="toggleDropdown()">
-                                <i class="fas fa-user-circle"></i> {{ user.username }}
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div id="userDropdown" class="dropdown-menu" style="display: none;">
-                                {% if user.profile.role == 'PHARMACY_OWNER' %}
-                                    <a href="{% url 'pharmacy_dashboard' %}" class="dropdown-item">
-                                        <i class="fas fa-store"></i> My Pharmacy
-                                    </a>
-                                {% endif %}
-                                {% if user.profile.role == 'ADMIN' or user.is_staff %}
-                                    <a href="{% url 'admin_dashboard' %}" class="dropdown-item">
-                                        <i class="fas fa-tachometer-alt"></i> Admin Dashboard
-                                    </a>
-                                {% endif %}
-                                <a href="{% url 'user_profile' %}" class="dropdown-item">
-                                    <i class="fas fa-user-edit"></i> My Profile
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a href="{% url 'logout' %}" class="dropdown-item text-danger">
-                                    <i class="fas fa-sign-out-alt"></i> Logout
-                                </a>
-                            </div>
-                        </li>
-                    {% else %}
-                        <li><a href="{% url 'about_us' %}" class="nav-link">
-                            <i class="fas fa-info-circle"></i> About
-                        </a></li>
-                        <li><a href="{% url 'login' %}" class="btn btn-outline btn-sm">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </a></li>
-                        <li><a href="{% url 'register' %}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-user-plus"></i> Sign Up
-                        </a></li>
-                    {% endif %}
-                </ul>
-                
-                <!-- Dark Mode Toggle -->
-                <button id="themeToggle" class="btn btn-secondary btn-sm" onclick="toggleTheme()" title="Toggle Dark Mode">
-                    <i class="fas fa-moon" id="themeIcon"></i>
-                </button>
-            </div>
-        </div>
-    </nav>
+    <!-- Include New Header -->
+    {% include 'accounts/header.html' %}
 
     <!-- Messages/Alerts -->
     {% if messages %}

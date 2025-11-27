@@ -13,17 +13,10 @@ urlpatterns = [
     path("predict", views.predict, name='predict'),
     path("search-results/", views.search_results_page, name='search_results_page'),
     
-    # Manual and GPS Search Pages
-    path('search/manual/', views.search_manual_page, name='search_manual_page'),
-    path('search/gps/', views.search_gps_page, name='search_gps_page'),
-    
     # Prescription & Search
     path('prescription-scanner/', views.prescription_scanner, name='prescription_scanner'),  # Upload prescription page
-    
-    # Chatbot
-    path('chatbot/', views.chatbot_page, name='chatbot'),
-    path('chatbot1/', views.chatbot_page, name='chatbot_page'),
-    path("chatbot-response/", views.chatbot_response, name="chatbot-response"),
+    path('search/manual/', views.search_manual_page, name='search_manual_page'),
+    path('search/gps/', views.search_gps_page, name='search_gps_page'),
     
     # User & Info
     path('profile/', views.user_profile, name='user_profile'),
@@ -45,10 +38,6 @@ urlpatterns = [
     path('api/all-pharmacies/', views.search_all_pharmacies, name='all_pharmacies'),
     path('api/all-medicines/', views.search_all_medicines, name='all_medicines'),
     path('api/locations-list/', views.search_locations_list, name='locations_list'),
-    
-    # New Manual and GPS Search APIs
-    path('api/search-manual/', views.search_manual, name='search_manual_api'),
-    path('api/search-gps/', views.search_gps, name='search_gps_api'),
 ]
 
 

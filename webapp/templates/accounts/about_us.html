@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -42,15 +43,9 @@
     </style>
 </head>
 <body>
-    <nav>
-        <div class="logo"><i class="fas fa-pills"></i> MediLocator</div>
-        <div class="nav-links">
-            <a href="{% url 'home' %}"><i class="fas fa-home"></i> Home</a>
-            <a href="{% url 'about_us' %}"><i class="fas fa-info-circle"></i> About</a>
-            <a href="{% url 'prescription_scanner' %}"><i class="fas fa-file-prescription"></i> Scanner</a>
-            {% if user.is_authenticated %}<a href="{% url 'logout' %}" class="btn-primary">Logout</a>{% else %}<a href="{% url 'login' %}" class="btn-primary">Login</a>{% endif %}
-        </div>
-    </nav>
+    <!-- Include New Header -->
+    {% include 'accounts/header.html' %}
+    
     <section class="hero"><h1>About MediLocator</h1><p>Your trusted partner in finding medicines easily and affordably</p></section>
     <div class="container">
         <section class="section">

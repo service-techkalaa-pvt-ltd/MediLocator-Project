@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -353,18 +354,8 @@
 </head>
 <body>
 
-  <!-- Navigation -->
-  <nav>
-    <div class="logo">
-      <i class="fas fa-pills"></i>
-      <span>MediLocator</span>
-    </div>
-    <div class="nav-links">
-      <a href="/"><i class="fas fa-home"></i> Home</a>
-      <a href="/chatbot/"><i class="fas fa-comments"></i> Chatbot</a>
-      <a href="/about/"><i class="fas fa-info-circle"></i> About</a>
-    </div>
-  </nav>
+  <!-- Include New Header -->
+  {% include 'accounts/header.html' %}
 
   <!-- Main Content -->
   <div class="container">
