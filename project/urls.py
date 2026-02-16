@@ -32,7 +32,7 @@ from django.conf.urls import include
 from django.conf.urls.static import static
 from django.conf import settings
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('webapp.urls'))
+    path('', include('webapp.urls')),  # Custom admin at /admin-ml/ loads first
+    path('admin/', admin.site.urls),    # Django admin at /admin/
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

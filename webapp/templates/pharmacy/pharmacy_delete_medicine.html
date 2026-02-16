@@ -1,0 +1,71 @@
+{% extends 'pharmacy/pharmacy_base.html' %}
+
+{% block title %}Delete Medicine{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+        Delete Medicine
+    </h1>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div style="text-align: center; padding: 20px;">
+        <i class="fas fa-exclamation-circle" style="font-size: 64px; color: #dc3545; margin-bottom: 20px;"></i>
+        
+        <h2 style="color: #333; margin-bottom: 15px;">Are you sure?</h2>
+        
+        <p style="font-size: 16px; color: #666; margin-bottom: 25px;">
+            You are about to delete the following medicine from your inventory:
+        </p>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px; text-align: left;">
+            <div style="margin-bottom: 10px;">
+                <label style="font-weight: 600; color: #666;">Medicine Name:</label>
+                <p style="font-size: 18px; font-weight: 600; color: #333; margin: 5px 0;">{{ inventory.medicine.name }}</p>
+            </div>
+            
+            {% if inventory.medicine.generic_name %}
+            <div style="margin-bottom: 10px;">
+                <label style="font-weight: 600; color: #666;">Generic Name:</label>
+                <p style="color: #666; margin: 5px 0;">{{ inventory.medicine.generic_name }}</p>
+            </div>
+            {% endif %}
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                <div>
+                    <label style="font-weight: 600; color: #666;">Current Stock:</label>
+                    <p style="font-weight: 600; color: #333; margin: 5px 0;">{{ inventory.quantity }} units</p>
+                </div>
+                <div>
+                    <label style="font-weight: 600; color: #666;">Price:</label>
+                    <p style="font-weight: 600; color: #333; margin: 5px 0;">₹{{ inventory.price }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="background: #f8d7da; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #dc3545;">
+            <p style="margin: 0; color: #721c24; font-size: 14px; text-align: left;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Warning:</strong> This action will remove this medicine from your pharmacy inventory. 
+                The medicine will still exist in the MediLocate database but won't be listed under your pharmacy. 
+                This action cannot be undone.
+            </p>
+        </div>
+        
+        <form method="POST" action="{% url 'pharmacy_delete_medicine' inventory.id %}" style="display: inline;">
+            {% csrf_token %}
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <a href="{% url 'pharmacy_medicines' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Yes, Delete Medicine
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

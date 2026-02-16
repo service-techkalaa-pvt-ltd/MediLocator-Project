@@ -1,0 +1,36 @@
+# Django Core
+Django==3.2.25
+python-decouple==3.8
+whitenoise==6.6.0
+
+# Database
+# SQLite is built-in with Python
+
+# OCR and Image Processing
+pytesseract==0.3.10
+Pillow==10.0.0
+opencv-python-headless==4.8.0.76
+numpy==1.24.3
+
+# ML Dependencies (Optional - for prescription detection)
+# Uncomment if you need ML features
+# torch==2.0.0
+# torchvision==0.15.0
+# ultralytics==8.0.0
+# roboflow==1.1.0
+
+# Data Science
+pandas==2.0.0
+
+# Text Processing
+rapidfuzz==3.0.0
+
+# Utilities
+PyYAML==6.0
+requests==2.31.0
+
+# WSGI Server for production
+gunicorn==21.2.0
+
+# Note: For Replit deployment, tesseract-ocr system package is needed
+# This will be configured in replit.nix

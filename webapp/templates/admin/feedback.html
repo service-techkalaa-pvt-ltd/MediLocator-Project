@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Feedback - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); color: white; overflow-y: auto; }
+        .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { font-size: 22px; }
+        .sidebar-menu { padding: 20px 0; }
+        .menu-item { padding: 14px 25px; display: flex; align-items: center; gap: 12px; color: white; text-decoration: none; transition: all 0.3s; border-left: 3px solid transparent; }
+        .menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.1); border-left-color: white; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .top-bar { background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .top-bar h1 { font-size: 26px; color: #2d3748; }
+        .logout-btn { padding: 10px 20px; background: #f56565; color: white; border: none; border-radius: 8px; text-decoration: none; }
+        .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        th, td { padding: 15px; text-align: left; }
+        td { border-bottom: 1px solid #e2e8f0; }
+        tbody tr:hover { background: #f7fafc; }
+        .btn-delete { padding: 8px 16px; border: none; border-radius: 6px; background: #f56565; color: white; display: inline-block; font-size: 13px; cursor: pointer; }
+        .btn-delete:hover { background: #e53e3e; }
+        .alert { padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .alert-success { background: #c6f6d5; color: #22543d; }
+        .pagination { display: flex; justify-content: center; align-items: center; padding: 20px; gap: 10px; }
+        .pagination a, .pagination span { padding: 8px 15px; border: 1px solid #e2e8f0; border-radius: 6px; text-decoration: none; color: #667eea; }
+        .pagination .current { background: #667eea; color: white; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header"><h2><i class="fas fa-hospital"></i> MediLocate</h2><p>Administration Panel</p></div>
+        <nav class="sidebar-menu">
+            <a href="{% url 'admin_dashboard_main' %}" class="menu-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
+            <a href="{% url 'admin_reports' %}" class="menu-item"><i class="fas fa-chart-line"></i><span>Reports</span></a>
+            <a href="{% url 'admin_users' %}" class="menu-item"><i class="fas fa-users"></i><span>Manage Users</span></a>
+            <a href="{% url 'admin_pharmacies' %}" class="menu-item"><i class="fas fa-pills"></i><span>Manage Pharmacies</span></a>
+            <a href="{% url 'admin_medicines' %}" class="menu-item"><i class="fas fa-capsules"></i><span>Manage Medicines</span></a>
+            <a href="{% url 'admin_feedback' %}" class="menu-item active"><i class="fas fa-comments"></i><span>User Feedback</span></a>
+            <a href="{% url 'home' %}" class="menu-item"><i class="fas fa-globe"></i><span>View Site</span></a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1><i class="fas fa-comments"></i> User Feedback</h1>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <span style="color: #667eea; font-weight: 600;">Welcome, {{ admin_user.username }}</span>
+                <a href="{% url 'admin_logout' %}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+
+        {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for feedback in feedbacks %}
+                    <tr>
+                        <td><strong>{{ feedback.name }}</strong></td>
+                        <td>{{ feedback.email }}</td>
+                        <td style="max-width: 300px;">{{ feedback.message|truncatewords:15 }}</td>
+                        <td>{{ feedback.submitted_at|date:"M d, Y" }}</td>
+                        <td>
+                            <form method="POST" action="{% url 'admin_feedback_delete' feedback.id %}" style="display: inline;" onsubmit="return confirm('Delete this feedback?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-delete"><i class="fas fa-trash"></i> Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" style="text-align: center; padding: 40px;">No feedback available</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if feedbacks.has_other_pages %}
+            <div class="pagination">
+                {% if feedbacks.has_previous %}<a href="?page=1">First</a><a href="?page={{ feedbacks.previous_page_number }}">Previous</a>{% endif %}
+                <span class="current">Page {{ feedbacks.number }} of {{ feedbacks.paginator.num_pages }}</span>
+                {% if feedbacks.has_next %}<a href="?page={{ feedbacks.next_page_number }}">Next</a><a href="?page={{ feedbacks.paginator.num_pages }}">Last</a>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

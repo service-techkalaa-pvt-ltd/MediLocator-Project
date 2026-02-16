@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Owner Registration - MediLocate</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .register-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .register-header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .register-header i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .register-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .register-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .register-body {
+            padding: 40px 30px;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border-left: 4px solid #c33;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border-left: 4px solid #3c3;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #11998e;
+            font-size: 16px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #11998e;
+            box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(17, 153, 142, 0.3);
+        }
+
+        .register-btn:active {
+            transform: translateY(0);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .back-link a {
+            color: #11998e;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+
+        .back-link a:hover {
+            color: #38ef7d;
+            gap: 8px;
+        }
+
+        .info-note {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            border-left: 4px solid #11998e;
+        }
+
+        .info-note i {
+            color: #11998e;
+            margin-right: 5px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .errorlist {
+            list-style: none;
+            padding: 10px;
+            background: #fee;
+            border-radius: 5px;
+            color: #c33;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .errorlist li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <i class="fas fa-store"></i>
+            <h1>Pharmacy Owner Registration</h1>
+            <p>Join MediLocate Pharmacy Network</p>
+        </div>
+        
+        <div class="register-body">
+            <div class="info-note">
+                <i class="fas fa-info-circle"></i>
+                Register your pharmacy to manage inventory, track orders, and reach more customers.
+            </div>
+
+            <!-- Django Messages -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'pharmacy_register' %}" id="registrationForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="username">Username *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        {{ form.username }}
+                    </div>
+                    <span class="help-text">Only letters, numbers, and @/./+/-/_ characters allowed</span>
+                    <span class="validation-hint" id="username-hint"></span>
+                    {% if form.username.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.username.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name">First Name *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-id-card"></i>
+                            {{ form.first_name }}
+                        </div>
+                        {% if form.first_name.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.first_name.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last_name">Last Name *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-id-card"></i>
+                            {{ form.last_name }}
+                        </div>
+                        {% if form.last_name.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.last_name.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        {{ form.email }}
+                    </div>
+                    <span class="validation-hint" id="email-hint"></span>
+                    {% if form.email.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.email.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="phone_number">Phone Number *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone"></i>
+                        {{ form.phone_number }}
+                    </div>
+                    <span class="help-text">Format: +1234567890 (up to 15 digits)</span>
+                    <span class="validation-hint" id="phone-hint"></span>
+                    {% if form.phone_number.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.phone_number.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="pharmacy_name">Pharmacy Name *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-store-alt"></i>
+                        {{ form.pharmacy_name }}
+                    </div>
+                    {% if form.pharmacy_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.pharmacy_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="pharmacy_address">Pharmacy Address *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ form.pharmacy_address }}
+                    </div>
+                    {% if form.pharmacy_address.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.pharmacy_address.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-city"></i>
+                            {{ form.city }}
+                        </div>
+                        {% if form.city.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.city.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pharmacy_phone">Pharmacy Phone *</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-phone-alt"></i>
+                            {{ form.pharmacy_phone }}
+                        </div>
+                        {% if form.pharmacy_phone.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.pharmacy_phone.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password1">Password *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        {{ form.password1 }}
+                    </div>
+                    <span class="help-text">Minimum 8 characters, not entirely numeric</span>
+                    <span class="validation-hint" id="password-hint"></span>
+                    {% if form.password1.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.password1.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="password2">Confirm Password *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        {{ form.password2 }}
+                    </div>
+                    <span class="validation-hint" id="password2-hint"></span>
+                    {% if form.password2.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.password2.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="register-btn">
+                    <i class="fas fa-user-plus"></i> Register Pharmacy
+                </button>
+            </form>
+
+            <div class="back-link" style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="{% url 'home' %}">
+                    <i class="fas fa-arrow-left"></i> Back to Website
+                </a>
+                <a href="{% url 'pharmacy_login' %}" style="color: #38ef7d;">
+                    <i class="fas fa-sign-in-alt"></i> Already have an account?
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real-time validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const usernameInput = document.getElementById('id_username');
+            const emailInput = document.getElementById('id_email');
+            const phoneInput = document.getElementById('id_phone_number');
+            const password1Input = document.getElementById('id_password1');
+            const password2Input = document.getElementById('id_password2');
+
+            // Username validation
+            if (usernameInput) {
+                usernameInput.addEventListener('input', function() {
+                    const hint = document.getElementById('username-hint');
+                    const value = this.value;
+                    const validPattern = /^[a-zA-Z0-9@.+_-]+$/;
+                    
+                    if (value === '') {
+                        hint.textContent = '';
+                        hint.className = 'validation-hint';
+                    } else if (!validPattern.test(value)) {
+                        hint.textContent = '✗ Only letters, numbers, and @/./+/-/_ allowed';
+                        hint.className = 'validation-hint error';
+                    } else if (value.length < 3) {
+                        hint.textContent = '⚠ Username should be at least 3 characters';
+                        hint.className = 'validation-hint warning';
+                    } else {
+                        hint.textContent = '✓ Valid username format';
+                        hint.className = 'validation-hint success';
+                    }
+                });
+            }
+
+            // Email validation
+            if (emailInput) {
+                emailInput.addEventListener('input', function() {
+                    const hint = document.getElementById('email-hint');
+                    const value = this.value;
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    
+                    if (value === '') {
+                        hint.textContent = '';
+                        hint.className = 'validation-hint';
+                    } else if (!emailPattern.test(value)) {
+                        hint.textContent = '✗ Invalid email format';
+                        hint.className = 'validation-hint error';
+                    } else {
+                        hint.textContent = '✓ Valid email format';
+                        hint.className = 'validation-hint success';
+                    }
+                });
+            }
+
+            // Phone validation
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function() {
+                    const hint = document.getElementById('phone-hint');
+                    const value = this.value;
+                    const phonePattern = /^\+?1?\d{9,15}$/;
+                    
+                    if (value === '') {
+                        hint.textContent = '';
+                        hint.className = 'validation-hint';
+                    } else if (!phonePattern.test(value)) {
+                        hint.textContent = '✗ Format: +1234567890 (9-15 digits)';
+                        hint.className = 'validation-hint error';
+                    } else {
+                        hint.textContent = '✓ Valid phone format';
+                        hint.className = 'validation-hint success';
+                    }
+                });
+            }
+
+            // Password validation
+            if (password1Input) {
+                password1Input.addEventListener('input', function() {
+                    const hint = document.getElementById('password-hint');
+                    const value = this.value;
+                    const isNumeric = /^\d+$/.test(value);
+                    
+                    if (value === '') {
+                        hint.textContent = '';
+                        hint.className = 'validation-hint';
+                    } else if (value.length < 8) {
+                        hint.textContent = '✗ Minimum 8 characters required';
+                        hint.className = 'validation-hint error';
+                    } else if (isNumeric) {
+                        hint.textContent = '✗ Password cannot be entirely numeric';
+                        hint.className = 'validation-hint error';
+                    } else {
+                        hint.textContent = '✓ Strong password';
+                        hint.className = 'validation-hint success';
+                    }
+
+                    // Also check password2 match if it has value
+                    if (password2Input && password2Input.value) {
+                        validatePasswordMatch();
+                    }
+                });
+            }
+
+            // Password confirmation validation
+            if (password2Input) {
+                password2Input.addEventListener('input', validatePasswordMatch);
+            }
+
+            function validatePasswordMatch() {
+                const hint = document.getElementById('password2-hint');
+                const pass1 = password1Input.value;
+                const pass2 = password2Input.value;
+                
+                if (pass2 === '') {
+                    hint.textContent = '';
+                    hint.className = 'validation-hint';
+                } else if (pass1 !== pass2) {
+                    hint.textContent = '✗ Passwords do not match';
+                    hint.className = 'validation-hint error';
+                } else {
+                    hint.textContent = '✓ Passwords match';
+                    hint.className = 'validation-hint success';
+                }
+            }
+        });
+    </script>
+
+    <style>
+        .validation-hint {
+            display: block;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            padding: 0.25rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .validation-hint.success {
+            color: #10b981;
+        }
+
+        .validation-hint.error {
+            color: #ef4444;
+            font-weight: 500;
+        }
+
+        .validation-hint.warning {
+            color: #f59e0b;
+        }
+
+        .help-text {
+            display: block;
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+    </style>
+</body>
+</html>

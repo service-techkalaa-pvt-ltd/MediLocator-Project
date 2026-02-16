@@ -1,0 +1,145 @@
+{% extends 'pharmacy/pharmacy_base.html' %}
+
+{% block title %}Medicines & Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="fas fa-pills"></i>
+        Medicines & Inventory
+    </h1>
+    <a href="{% url 'pharmacy_add_medicine' %}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Add New Medicine
+    </a>
+</div>
+
+<!-- Search and Filter -->
+<div class="card">
+    <form method="GET" action="{% url 'pharmacy_medicines' %}">
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: end;">
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Search Medicines</label>
+                <input 
+                    type="text" 
+                    name="search" 
+                    placeholder="Search by medicine name, generic name..."
+                    value="{{ search_query }}"
+                    style="width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px;"
+                >
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Medicines Table -->
+<div class="card">
+    <div class="card-title">
+        All Medicines ({{ medicines.count }})
+    </div>
+    
+    {% if medicines %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <th style="padding: 12px; text-align: left;">Medicine</th>
+                    <th style="padding: 12px; text-align: center;">Category</th>
+                    <th style="padding: 12px; text-align: center;">Stock</th>
+                    <th style="padding: 12px; text-align: center;">Price</th>
+                    <th style="padding: 12px; text-align: center;">Status</th>
+                    <th style="padding: 12px; text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in medicines %}
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 12px;">
+                        <div style="font-weight: 600; color: #333;">{{ item.medicine.name }}</div>
+                        {% if item.medicine.generic_name %}
+                        <small style="color: #666;">{{ item.medicine.generic_name }}</small>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        {% if item.medicine.category %}
+                        <span style="background: #e7f3ff; color: #0066cc; padding: 4px 8px; border-radius: 5px; font-size: 12px;">
+                            {{ item.medicine.category }}
+                        </span>
+                        {% else %}
+                        <span style="color: #999;">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        {% if item.quantity > 20 %}
+                        <span style="background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 5px; font-weight: 600;">
+                            {{ item.quantity }}
+                        </span>
+                        {% elif item.quantity > 0 %}
+                        <span style="background: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 5px; font-weight: 600;">
+                            {{ item.quantity }}
+                        </span>
+                        {% else %}
+                        <span style="background: #f8d7da; color: #721c24; padding: 5px 10px; border-radius: 5px; font-weight: 600;">
+                            {{ item.quantity }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: center; font-weight: 600;">₹{{ item.price }}</td>
+                    <td style="padding: 12px; text-align: center;">
+                        {% if item.quantity > 0 %}
+                        <span style="color: #28a745;"><i class="fas fa-check-circle"></i> In Stock</span>
+                        {% else %}
+                        <span style="color: #dc3545;"><i class="fas fa-times-circle"></i> Out of Stock</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <a href="{% url 'pharmacy_edit_medicine' item.id %}" class="btn btn-sm btn-primary" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'pharmacy_delete_medicine' item.id %}" class="btn btn-sm btn-danger" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: #666;">
+        <i class="fas fa-pills" style="font-size: 48px; color: #ddd; margin-bottom: 15px;"></i>
+        <p style="font-size: 18px;">No medicines found.</p>
+        <p>Start by adding medicines to your inventory.</p>
+        <a href="{% url 'pharmacy_add_medicine' %}" class="btn btn-primary" style="margin-top: 15px;">
+            <i class="fas fa-plus-circle"></i> Add Your First Medicine
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if medicines.has_other_pages %}
+<div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+    {% if medicines.has_previous %}
+    <a href="?page={{ medicines.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-chevron-left"></i> Previous
+    </a>
+    {% endif %}
+    
+    <span style="padding: 8px 16px; background: white; border-radius: 8px; font-weight: 600;">
+        Page {{ medicines.number }} of {{ medicines.paginator.num_pages }}
+    </span>
+    
+    {% if medicines.has_next %}
+    <a href="?page={{ medicines.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-secondary btn-sm">
+        Next <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

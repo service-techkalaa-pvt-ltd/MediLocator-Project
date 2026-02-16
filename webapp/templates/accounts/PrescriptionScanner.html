@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prescription Scanner - MediLocator</title>
+  <title>Prescription Scanner - MediLocate</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
@@ -23,7 +23,6 @@
       position: relative;
     }
 
-    /* Lightweight background - removed heavy animation */
     body::before {
       content: '';
       position: absolute;
@@ -32,10 +31,8 @@
       background-image: 
         repeating-linear-gradient(60deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 52px),
         repeating-linear-gradient(120deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 52px);
-      /* Removed animation for better performance */
     }
 
-    /* Navigation - Optimized */
     nav {
       background: rgba(255, 255, 255, 0.98);
       padding: 1rem 2rem;
@@ -93,7 +90,6 @@
       box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
     }
 
-    /* Main Container */
     .container {
       flex: 1;
       display: flex;
@@ -135,7 +131,6 @@
       margin-bottom: 3rem;
     }
 
-    /* Upload Card */
     .upload-card {
       background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(20px);
@@ -217,7 +212,6 @@
       display: none;
     }
 
-    /* Camera Button */
     .camera-btn {
       background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: white;
@@ -245,7 +239,6 @@
       font-size: 1.2rem;
     }
 
-    /* Divider */
     .upload-divider {
       display: flex;
       align-items: center;
@@ -266,7 +259,6 @@
       padding: 0 1rem;
     }
 
-    /* Camera Modal */
     .camera-modal {
       display: none;
       position: fixed;
@@ -369,9 +361,6 @@
       background: linear-gradient(135deg, #7C3AED, #06B6D4);
     }
 
-    
-
-    /* Preview Section */
     .preview-section {
       margin-top: 2rem;
       display: none;
@@ -401,8 +390,11 @@
       width: 120px;
       height: 120px;
       border-radius: 10px;
-      object-fit: cover;
       border: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7fafc;
     }
 
     .preview-details {
@@ -439,7 +431,6 @@
       transform: scale(1.1);
     }
 
-    /* Submit Button */
     .submit-btn {
       width: 100%;
       padding: 1.2rem;
@@ -480,7 +471,12 @@
       box-shadow: 0 18px 45px rgba(16, 185, 129, 0.6);
     }
 
-    /* Features Grid */
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .features {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -525,7 +521,6 @@
       margin: 0;
     }
 
-    /* Progress Bar */
     .progress-container {
       display: none;
       margin-top: 2rem;
@@ -557,7 +552,6 @@
       text-align: center;
     }
 
-    /* Spinner */
     .spinner {
       border: 3px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
@@ -581,7 +575,6 @@
       display: none;
     }
 
-    /* Footer */
     .footer {
       background: #2d3748;
       color: white;
@@ -627,7 +620,6 @@
       color: rgba(255, 255, 255, 0.7);
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       nav {
         flex-direction: column;
@@ -689,10 +681,8 @@
 </head>
 <body>
 
-  <!-- Include New Header -->
   {% include 'accounts/header.html' %}
 
-  <!-- Main Content -->
   <div class="container">
     <div class="upload-section">
       <h1><i class="fas fa-file-prescription"></i> Prescription Scanner</h1>
@@ -702,7 +692,6 @@
         <form method="POST" enctype="multipart/form-data" id="upload-form">
           {% csrf_token %}
           
-          <!-- Upload Box -->
           <label for="prescription-file">
             <div class="upload-box" id="upload-box">
               <div class="upload-icon">
@@ -715,35 +704,31 @@
               </p>
             </div>
           </label>
-          <input type="file" id="prescription-file" name="document" accept="image/*,.pdf" required>
+          <input type="file" id="prescription-file" name="prescription_file" accept="image/*,.pdf" required>
           
-          <!-- Divider -->
           <div class="upload-divider">
             <span>OR</span>
           </div>
           
-          <!-- Camera Button -->
-          <button type="button" class="camera-btn" onclick="openCamera()">
+          <button type="button" class="camera-btn" id="camera-btn">
             <i class="fas fa-camera"></i>
             Take Photo with Camera
           </button>
 
-          <!-- Preview Section -->
           <div class="preview-section" id="preview-section">
             <div class="preview-card" id="preview-card">
-              <img id="preview-image" class="preview-image" src="" alt="Preview">
+              <div id="preview-image" class="preview-image"></div>
               <div class="preview-details">
                 <h3 id="file-name">prescription.jpg</h3>
                 <p><i class="fas fa-file"></i> <span id="file-size">0 KB</span></p>
                 <p><i class="fas fa-calendar"></i> <span id="file-date">Today</span></p>
               </div>
-              <button type="button" class="remove-btn" onclick="removeFile()">
+              <button type="button" class="remove-btn" id="remove-btn">
                 <i class="fas fa-times"></i>
               </button>
             </div>
           </div>
 
-          <!-- Progress Bar -->
           <div class="progress-container" id="progress-container">
             <div class="progress-bar">
               <div class="progress-fill" id="progress-fill"></div>
@@ -751,7 +736,6 @@
             <p class="progress-text" id="progress-text">Processing...</p>
           </div>
 
-          <!-- Submit Button -->
           <button type="submit" class="submit-btn" id="submit-btn" disabled>
             <span class="btn-text">
               <i class="fas fa-paper-plane"></i>
@@ -762,7 +746,6 @@
         </form>
       </div>
 
-      <!-- Features -->
       <div class="features">
         <div class="feature-card">
           <i class="fas fa-robot"></i>
@@ -788,23 +771,22 @@
     </div>
   </div>
 
-  <!-- Camera Modal -->
   <div class="camera-modal" id="camera-modal">
     <div class="camera-container">
       <h2><i class="fas fa-camera"></i> Capture Prescription Photo</h2>
       <video id="camera-video" autoplay playsinline></video>
       <canvas id="camera-canvas"></canvas>
       <div class="camera-controls">
-        <button type="button" class="close-camera-btn" onclick="closeCamera()">
+        <button type="button" class="close-camera-btn" id="close-camera-btn">
           <i class="fas fa-times"></i> Cancel
         </button>
-        <button type="button" class="capture-btn" id="capture-btn" onclick="capturePhoto()">
+        <button type="button" class="capture-btn" id="capture-btn">
           <i class="fas fa-camera"></i>
         </button>
-        <button type="button" class="retake-btn" id="retake-btn" style="display: none;" onclick="retakePhoto()">
+        <button type="button" class="retake-btn" id="retake-btn" style="display: none;">
           <i class="fas fa-redo"></i> Retake
         </button>
-        <button type="button" class="use-photo-btn" id="use-photo-btn" style="display: none;" onclick="usePhoto()">
+        <button type="button" class="use-photo-btn" id="use-photo-btn" style="display: none;">
           <i class="fas fa-check"></i> Use This Photo
         </button>
       </div>
@@ -812,6 +794,7 @@
   </div>
 
   <script>
+    // DOM Elements
     const uploadBox = document.getElementById('upload-box');
     const fileInput = document.getElementById('prescription-file');
     const previewSection = document.getElementById('preview-section');
@@ -820,10 +803,45 @@
     const fileSize = document.getElementById('file-size');
     const fileDate = document.getElementById('file-date');
     const submitBtn = document.getElementById('submit-btn');
+    const removeBtn = document.getElementById('remove-btn');
     const uploadForm = document.getElementById('upload-form');
     const progressContainer = document.getElementById('progress-container');
     const progressFill = document.getElementById('progress-fill');
     const progressText = document.getElementById('progress-text');
+    
+    // Camera elements
+    const cameraBtn = document.getElementById('camera-btn');
+    const cameraModal = document.getElementById('camera-modal');
+    const cameraVideo = document.getElementById('camera-video');
+    const cameraCanvas = document.getElementById('camera-canvas');
+    const closeCameraBtn = document.getElementById('close-camera-btn');
+    const capturePhotoBtn = document.getElementById('capture-btn');
+    const retakeBtn = document.getElementById('retake-btn');
+    const usePhotoBtn = document.getElementById('use-photo-btn');
+    
+    let cameraStream = null;
+    let capturedImageBlob = null;
+    let userLocation = null;
+    
+    // Get user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          userLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+          console.log('✅ Location obtained:', userLocation);
+        },
+        error => console.warn('⚠️ Location access denied:', error)
+      );
+    }
+
+    // Upload box click handler
+    uploadBox.addEventListener('click', () => {
+      console.log('📁 Upload box clicked');
+      fileInput.click();
+    });
 
     // Drag and drop
     uploadBox.addEventListener('dragover', (e) => {
@@ -849,32 +867,38 @@
     // File input change
     fileInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) {
+        console.log('📄 File selected:', e.target.files[0].name);
         handleFileSelect(e.target.files[0]);
       }
     });
 
     // Handle file selection
     function handleFileSelect(file) {
+      console.log('🔍 Processing file:', file.name, file.type, file.size);
+      
       // Validate file type
       const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!validTypes.includes(file.type)) {
-        alert('Please upload a valid image (JPG, PNG) or PDF file');
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const validExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+      
+      if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+        alert('❌ Please upload a valid image (JPG, PNG) or PDF file');
         return;
       }
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+        alert(`❌ File size must be less than 5MB. Your file: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
         return;
       }
 
       // Show preview
       const reader = new FileReader();
       reader.onload = (e) => {
-        if (file.type === 'application/pdf') {
-          previewImage.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50">📄</text></svg>';
+        if (file.type === 'application/pdf' || fileExtension === 'pdf') {
+          previewImage.innerHTML = '<i class="fas fa-file-pdf" style="font-size: 4rem; color: #dc2626;"></i>';
         } else {
-          previewImage.src = e.target.result;
+          previewImage.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">`;
         }
       };
       reader.readAsDataURL(file);
@@ -887,153 +911,283 @@
       // Show preview and enable submit
       previewSection.classList.add('active');
       submitBtn.disabled = false;
+      
+      console.log('✅ File preview ready');
     }
 
     // Remove file
-    function removeFile() {
+    removeBtn.addEventListener('click', () => {
+      console.log('🗑️ Removing file');
       fileInput.value = '';
       previewSection.classList.remove('active');
       submitBtn.disabled = true;
-    }
+      previewImage.innerHTML = '';
+    });
 
     // Form submission
     uploadForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      console.log('📤 Form submitted, processing...');
+      
+      // Check if file exists
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('❌ Please select a file first');
+        return;
+      }
+      
       submitBtn.classList.add('loading');
       submitBtn.disabled = true;
       
       // Show progress
       progressContainer.classList.add('active');
+      progressFill.style.width = '10%';
+      progressText.textContent = 'Uploading prescription...';
       
-      // Simulate progress (replace with actual upload progress if using AJAX)
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        progressFill.style.width = progress + '%';
-        progressText.textContent = `Processing... ${progress}%`;
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('prescription_file', fileInput.files[0]);
+      
+      console.log('📦 File added to FormData:', fileInput.files[0].name);
+      
+      // Add location if available
+      if (userLocation) {
+        formData.append('latitude', userLocation.latitude);
+        formData.append('longitude', userLocation.longitude);
+        console.log('📍 Adding location:', userLocation);
+      }
+      
+      // Get CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      console.log('🔐 CSRF Token:', csrfToken ? 'Found' : 'Missing');
+      
+      console.log('🚀 Sending request to /api/process-prescription/');
+      
+      // Upload and process
+      fetch('/api/process-prescription/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken
+        },
+        body: formData
+      })
+      .then(response => {
+        console.log('📥 Response received:', response.status);
+        progressFill.style.width = '40%';
+        progressText.textContent = 'Processing with OCR...';
+        return response.json();
+      })
+      .then(data => {
+        console.log('📊 Data received:', data);
+        progressFill.style.width = '100%';
+        progressText.textContent = 'Complete!';
         
-        if (progress >= 90) {
-          clearInterval(interval);
-          progressText.textContent = 'Analyzing prescription...';
+        if (data.success) {
+          // OCR successful - check for detected medicines
+          const detectedMedicines = data.detected_medicines || [];
+          const matchedMedicines = data.matched_medicines || [];
+          
+          // Use matched medicines first (from database), then fallback to detected
+          const medicinesToSearch = matchedMedicines.length > 0 ? matchedMedicines : detectedMedicines;
+          
+          console.log('═══════ OCR RESULTS ═══════');
+          console.log('📋 Detected:', detectedMedicines);
+          console.log('✅ Matched in DB:', matchedMedicines);
+          console.log('🔍 Will search for:', medicinesToSearch);
+          console.log('💊 Redirect?', medicinesToSearch.length > 0 ? 'YES' : 'NO');
+          
+          // ALWAYS REDIRECT if ANY medicines detected
+          if (medicinesToSearch.length > 0) {
+            const medicines = medicinesToSearch.join(',');
+            console.log('🚀 REDIRECTING with:', medicines);
+            
+            // Build search URL
+            let searchUrl = '/search-results/?medicines=' + encodeURIComponent(medicines);
+            
+            // Add location for distance sorting
+            if (userLocation && userLocation.latitude && userLocation.longitude) {
+              searchUrl += '&lat=' + userLocation.latitude + '&lon=' + userLocation.longitude;
+              console.log('📍 Location added:', userLocation);
+            } else {
+              console.warn('⚠️ No location - searching without distance');
+            }
+            
+            console.log('🔗 URL:', searchUrl);
+            progressText.textContent = 'Medicine detected! Redirecting...';
+            
+            // Redirect immediately
+            setTimeout(() => {
+              console.log('➡️ EXECUTING REDIRECT NOW');
+              window.location.href = searchUrl;
+            }, 200);
+            
+          } else if (data.extracted_text) {
+            console.error('❌ No medicines in text:', data.extracted_text);
+            resetForm();
+            alert('No medicines detected in prescription. OCR extracted text but could not identify medicine names. Please try a clearer image or enter medicines manually.');
+          } else {
+            console.error('❌ No text extracted');
+            resetForm();
+            alert('Could not extract text from prescription. Please ensure the image is clear and medicine names are visible.');
+          }
+        } else {
+          // Check if it's a Tesseract error
+          if (data.error && data.error.includes('Tesseract')) {
+            showTesseractInstallGuide();
+          } else if (data.poppler_error || (data.error && data.error.toLowerCase().includes('poppler'))) {
+            showPopplerInstallGuide();
+          } else {
+            // Generic error - show in chatbot
+            resetForm();
+            openChatbotWithMessage('Error processing prescription: ' + (data.error || 'Unknown error'));
+          }
         }
-      }, 300);
+      })
+      .catch(error => {
+        console.error('❌ Error:', error);
+        alert('An error occurred while processing the prescription: ' + error.message);
+        resetForm();
+      });
     });
 
-    // ==================== CAMERA FUNCTIONALITY ====================
-    let cameraStream = null;
-    let capturedImageBlob = null;
-
-    // Open Camera
-    async function openCamera() {
-      const modal = document.getElementById('camera-modal');
-      const video = document.getElementById('camera-video');
-      const captureBtn = document.getElementById('capture-btn');
-      const retakeBtn = document.getElementById('retake-btn');
-      const usePhotoBtn = document.getElementById('use-photo-btn');
-
-      try {
-        // Request camera access
-        cameraStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: 'environment', // Use back camera on mobile
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          } 
-        });
-        
-        video.srcObject = cameraStream;
-        modal.classList.add('active');
-        
-        // Reset buttons
-        captureBtn.style.display = 'block';
-        retakeBtn.style.display = 'none';
-        usePhotoBtn.style.display = 'none';
-        video.style.display = 'block';
-        
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        alert('Unable to access camera. Please check permissions or try uploading a file instead.');
-      }
+    function resetForm() {
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
+      progressContainer.classList.remove('active');
     }
 
-    // Close Camera
-    function closeCamera() {
-      const modal = document.getElementById('camera-modal');
-      const video = document.getElementById('camera-video');
-      const canvas = document.getElementById('camera-canvas');
-      const captureBtn = document.getElementById('capture-btn');
-      const retakeBtn = document.getElementById('retake-btn');
-      const usePhotoBtn = document.getElementById('use-photo-btn');
+    function showManualMedicineEntry() {
+      // Hide upload section
+      document.querySelector('.upload-section').style.display = 'none';
       
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-      }
+      // Create manual entry form
+      const manualEntrySection = document.createElement('div');
+      manualEntrySection.className = 'manual-entry-section';
+      manualEntrySection.style.cssText = 'max-width: 800px; margin: 2rem auto; padding: 2rem;';
       
-      modal.classList.remove('active');
-      video.srcObject = null;
-      video.style.display = 'block';
-      canvas.classList.remove('show');
-      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      manualEntrySection.innerHTML = `
+        <div style="background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+          <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📝</div>
+            <h2 style="color: #1E40AF; font-size: 2rem; margin-bottom: 0.5rem;">Enter Medicine Names</h2>
+            <p style="color: #718096; font-size: 1rem;">Type the medicine names from your prescription</p>
+          </div>
+          
+          <div style="background: #fef3c7; padding: 1rem; border-radius: 10px; margin-bottom: 2rem; border-left: 4px solid #f59e0b;">
+            <div style="color: #92400e; font-weight: 600; margin-bottom: 0.3rem;">💡 Quick Mode (No OCR Required)</div>
+            <div style="color: #78350f; font-size: 0.9rem;">Simply type the medicine names, and we'll find them for you!</div>
+          </div>
+          
+          <div id="medicine-inputs" style="margin-bottom: 2rem;">
+            <div style="margin-bottom: 1rem;">
+              <input type="text" class="medicine-input" placeholder="Medicine 1 (e.g., Paracetamol)" style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <input type="text" class="medicine-input" placeholder="Medicine 2 (e.g., Amoxicillin)" style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <input type="text" class="medicine-input" placeholder="Medicine 3 (optional)" style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem;">
+            </div>
+          </div>
+          
+          <button onclick="addMoreMedicineInput()" style="background: #e2e8f0; color: #4a5568; border: none; padding: 0.8rem 1.5rem; border-radius: 10px; margin-bottom: 2rem; cursor: pointer; font-weight: 600;">
+            <i class="fas fa-plus"></i> Add More Medicine
+          </button>
+          
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button onclick="searchManualMedicines()" style="flex: 1; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 1.2rem; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; min-width: 200px;">
+              <i class="fas fa-search"></i> Search Pharmacies
+            </button>
+            <button onclick="location.reload()" style="flex: 1; background: white; color: #667eea; border: 2px solid #667eea; padding: 1.2rem; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; min-width: 200px;">
+              <i class="fas fa-upload"></i> Upload Different File
+            </button>
+          </div>
+        </div>
+      `;
       
-      // Reset buttons
-      captureBtn.style.display = 'block';
-      retakeBtn.style.display = 'none';
-      usePhotoBtn.style.display = 'none';
+      document.querySelector('.container').appendChild(manualEntrySection);
       
-      capturedImageBlob = null;
+      // Reset form
+      resetForm();
     }
-
-    // Capture Photo
-    function capturePhoto() {
-      const video = document.getElementById('camera-video');
-      const canvas = document.getElementById('camera-canvas');
-      const captureBtn = document.getElementById('capture-btn');
-      const retakeBtn = document.getElementById('retake-btn');
-      const usePhotoBtn = document.getElementById('use-photo-btn');
+    
+    function addMoreMedicineInput() {
+      const container = document.getElementById('medicine-inputs');
+      const inputCount = container.querySelectorAll('.medicine-input').length + 1;
       
-      // Set canvas size to fixed dimensions
-      canvas.width = 1920;
-      canvas.height = 1080;
+      const newInput = document.createElement('div');
+      newInput.style.marginBottom = '1rem';
+      newInput.innerHTML = `
+        <input type="text" class="medicine-input" placeholder="Medicine ${inputCount} (optional)" style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem;">
+      `;
       
-      // Draw video frame to canvas (centered and cropped if needed)
-      const context = canvas.getContext('2d');
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      container.appendChild(newInput);
+    }
+    
+    function searchManualMedicines() {
+      const inputs = document.querySelectorAll('.medicine-input');
+      const medicines = [];
       
-      // Convert canvas to blob
-      canvas.toBlob((blob) => {
-        capturedImageBlob = blob;
-        
-        // Hide video, show canvas with captured image
-        video.style.display = 'none';
-        canvas.classList.add('show');
-        
-        // Update buttons
-        captureBtn.style.display = 'none';
-        retakeBtn.style.display = 'inline-block';
-        usePhotoBtn.style.display = 'inline-block';
-        
-        // Stop camera stream
-        if (cameraStream) {
-          cameraStream.getTracks().forEach(track => track.stop());
-          cameraStream = null;
+      inputs.forEach(input => {
+        const value = input.value.trim();
+        if (value) {
+          medicines.push(value);
         }
-      }, 'image/jpeg', 0.95);
+      });
+      
+      if (medicines.length === 0) {
+        alert('❌ Please enter at least one medicine name');
+        return;
+      }
+      
+      console.log('🔍 Searching for medicines:', medicines);
+      
+      // Show loading
+      const searchBtn = event.target;
+      searchBtn.disabled = true;
+      searchBtn.innerHTML = '<div class="spinner" style="display: inline-block;"></div> Searching...';
+      
+      // Get user location
+      const latitude = userLocation ? userLocation.latitude : null;
+      const longitude = userLocation ? userLocation.longitude : null;
+      
+      // Search for medicines via API
+      fetch('/api/search-medicines-manual/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+          medicines: medicines,
+          latitude: latitude,
+          longitude: longitude
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('📊 Search results:', data);
+        
+        if (data.success && data.total_pharmacies > 0) {
+          displayPrescriptionResults(data);
+        } else {
+          alert('❌ ' + (data.message || 'No pharmacies found with these medicines.'));
+          searchBtn.disabled = false;
+          searchBtn.innerHTML = '<i class="fas fa-search"></i> Search Pharmacies';
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error:', error);
+        alert('An error occurred while searching: ' + error.message);
+        searchBtn.disabled = false;
+        searchBtn.innerHTML = '<i class="fas fa-search"></i> Search Pharmacies';
+      });
     }
 
-    // Retake Photo
-    async function retakePhoto() {
-      const video = document.getElementById('camera-video');
-      const canvas = document.getElementById('camera-canvas');
-      const captureBtn = document.getElementById('capture-btn');
-      const retakeBtn = document.getElementById('retake-btn');
-      const usePhotoBtn = document.getElementById('use-photo-btn');
-      
+    // Camera functionality
+    cameraBtn.addEventListener('click', async () => {
+      console.log('📷 Opening camera...');
       try {
-        // Clear canvas
-        canvas.classList.remove('show');
-        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Restart camera
         cameraStream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: 'environment',
@@ -1042,84 +1196,525 @@
           } 
         });
         
-        video.srcObject = cameraStream;
-        video.style.display = 'block';
+        cameraVideo.srcObject = cameraStream;
+        cameraModal.classList.add('active');
         
-        // Update buttons
-        captureBtn.style.display = 'block';
+        capturePhotoBtn.style.display = 'block';
+        retakeBtn.style.display = 'none';
+        usePhotoBtn.style.display = 'none';
+        cameraVideo.style.display = 'block';
+        cameraCanvas.classList.remove('show');
+        
+        console.log('✅ Camera opened successfully');
+      } catch (error) {
+        console.error('❌ Camera error:', error);
+        alert('Unable to access camera. Please check permissions or try uploading a file instead.');
+      }
+    });
+
+    closeCameraBtn.addEventListener('click', () => {
+      console.log('🔒 Closing camera');
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      cameraModal.classList.remove('active');
+      cameraVideo.srcObject = null;
+      cameraVideo.style.display = 'block';
+      cameraCanvas.classList.remove('show');
+      capturedImageBlob = null;
+    });
+
+    capturePhotoBtn.addEventListener('click', () => {
+      console.log('📸 Capturing photo...');
+      
+      cameraCanvas.width = 1920;
+      cameraCanvas.height = 1080;
+      
+      const context = cameraCanvas.getContext('2d');
+      context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+      
+      cameraCanvas.toBlob((blob) => {
+        capturedImageBlob = blob;
+        console.log('✅ Photo captured:', blob.size, 'bytes');
+        
+        cameraVideo.style.display = 'none';
+        cameraCanvas.classList.add('show');
+        
+        capturePhotoBtn.style.display = 'none';
+        retakeBtn.style.display = 'inline-block';
+        usePhotoBtn.style.display = 'inline-block';
+        
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          cameraStream = null;
+        }
+      }, 'image/jpeg', 0.95);
+    });
+
+    retakeBtn.addEventListener('click', async () => {
+      console.log('🔄 Retaking photo...');
+      try {
+        cameraCanvas.classList.remove('show');
+        cameraCanvas.getContext('2d').clearRect(0, 0, cameraCanvas.width, cameraCanvas.height);
+        
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          } 
+        });
+        
+        cameraVideo.srcObject = cameraStream;
+        cameraVideo.style.display = 'block';
+        
+        capturePhotoBtn.style.display = 'block';
         retakeBtn.style.display = 'none';
         usePhotoBtn.style.display = 'none';
         
         capturedImageBlob = null;
+        console.log('✅ Ready to capture again');
       } catch (error) {
-        console.error('Error restarting camera:', error);
+        console.error('❌ Error restarting camera:', error);
         alert('Unable to restart camera.');
       }
-    }
+    });
 
-    // Use Captured Photo
-    function usePhoto() {
+    usePhotoBtn.addEventListener('click', () => {
+      console.log('✔️ Using captured photo');
       if (!capturedImageBlob) {
         alert('No photo captured!');
         return;
       }
       
-      // Create a File object from blob
       const file = new File([capturedImageBlob], 'prescription-photo.jpg', { type: 'image/jpeg' });
       
-      // Create a DataTransfer to set the file input
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       fileInput.files = dataTransfer.files;
       
-      // Handle the file (show preview, enable submit)
       handleFileSelect(file);
       
-      // Close camera modal
-      closeCamera();
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      cameraModal.classList.remove('active');
+      cameraVideo.srcObject = null;
+    });
+
+    // Display prescription results
+    // Open chatbot with extracted medicines text and auto-search
+    function openChatbotWithMedicines(medicinesText, retryCount = 0) {
+      console.log('🤖 Opening chatbot with medicines:', medicinesText);
+      
+      // Open chatbot window
+      const chatbotWindow = document.getElementById('chatbot-window');
+      const chatbotToggleBtn = document.getElementById('chatbot-toggle-btn');
+      
+      if (!chatbotWindow && retryCount < 10) {
+        // Chatbot not loaded yet, retry after 100ms
+        console.log('⏳ Waiting for chatbot widget to load... attempt', retryCount + 1);
+        setTimeout(() => openChatbotWithMedicines(medicinesText, retryCount + 1), 100);
+        return;
+      }
+      
+      if (chatbotWindow) {
+        console.log('✅ Chatbot widget found, opening...');
+        chatbotWindow.classList.add('active');
+        if (chatbotToggleBtn) {
+          chatbotToggleBtn.classList.add('hidden');
+        }
+        
+        // Fill chatbot input with medicines
+        const chatbotInput = document.getElementById('chatbot-input');
+        if (chatbotInput) {
+          chatbotInput.value = medicinesText;
+          chatbotInput.focus();
+          
+          // Wait for chatbot functions to be available
+          setTimeout(() => {
+            // Add user message to chat
+            if (typeof window.addChatbotMessage === 'function') {
+              console.log('✅ Adding message to chatbot');
+              window.addChatbotMessage('Prescription uploaded: ' + medicinesText, 'user');
+            } else {
+              console.warn('⚠️ addChatbotMessage function not found');
+            }
+            
+            // Auto-send after additional delay
+            setTimeout(() => {
+              if (typeof window.sendChatbotMessage === 'function') {
+                console.log('✅ Sending message to chatbot');
+                window.sendChatbotMessage(medicinesText);
+                chatbotInput.value = ''; // Clear after sending
+              } else {
+                console.warn('⚠️ sendChatbotMessage function not found');
+              }
+            }, 500);
+          }, 200);
+        } else {
+          console.error('❌ Chatbot input field not found');
+        }
+      } else {
+        console.error('❌ Chatbot widget not found after', retryCount, 'retries');
+        alert('Chatbot is not available on this page. Extracted medicines: ' + medicinesText);
+      }
+    }
+    
+    // Open chatbot with a message (for errors)
+    function openChatbotWithMessage(message) {
+      const chatbotWindow = document.getElementById('chatbot-window');
+      const chatbotToggleBtn = document.getElementById('chatbot-toggle-btn');
+      
+      if (chatbotWindow) {
+        chatbotWindow.classList.add('active');
+        if (chatbotToggleBtn) {
+          chatbotToggleBtn.classList.add('hidden');
+        }
+        
+        if (typeof window.addChatbotMessage === 'function') {
+          window.addChatbotMessage(message, 'bot');
+        }
+      }
+    }
+    
+    function displayPrescriptionResults(data) {
+      document.querySelector('.upload-section').style.display = 'none';
+      
+      const resultsSection = document.createElement('div');
+      resultsSection.className = 'prescription-results';
+      resultsSection.style.cssText = 'max-width: 1200px; margin: 2rem auto; padding: 2rem;';
+      
+      let html = `
+        <div style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+          <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="color: #1E40AF; font-size: 2rem; margin-bottom: 1rem;">
+              <i class="fas fa-check-circle" style="color: #10b981;"></i> Prescription Processed Successfully!
+            </h2>
+            <p style="color: #718096; font-size: 1.1rem;">Found ${data.total_medicines} medicine(s) in ${data.total_pharmacies} pharmacy locations</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 15px; padding: 1.5rem; margin-bottom: 2rem;">
+            <h3 style="color: #1E40AF; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-pills"></i> Detected Medicines (OCR)
+            </h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+      `;
+      
+      data.detected_medicines.forEach(med => {
+        html += `
+          <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+            <i class="fas fa-capsules"></i> ${med}
+          </span>
+        `;
+      });
+      
+      html += `</div>`;
+      
+      // Show fuzzy matches if available
+      if (data.matched_medicines && data.matched_medicines.length > 0) {
+        html += `
+          <div style="border-top: 2px dashed #cbd5e0; padding-top: 1rem; margin-top: 1rem;">
+            <h4 style="color: #4a5568; font-size: 0.95rem; margin-bottom: 0.5rem;">
+              <i class="fas fa-magic"></i> Fuzzy Matched (AI-Enhanced):
+            </h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        `;
+        
+        data.matched_medicines.forEach(med => {
+          html += `
+            <span style="background: #d1fae5; color: #065f46; padding: 0.4rem 0.9rem; border-radius: 15px; font-weight: 600; font-size: 0.85rem;">
+              <i class="fas fa-check"></i> ${med}
+            </span>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      }
+      
+      html += `
+          </div>
+          
+          <div>
+            <h3 style="color: #2d3748; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-store"></i> Available at ${data.total_pharmacies} ${data.total_pharmacies === 1 ? 'Pharmacy' : 'Pharmacies'}
+              ${data.has_location ? '<span style="color: #667eea; font-size: 0.9rem; margin-left: auto;"><i class="fas fa-location-arrow"></i> Sorted by distance</span>' : ''}
+            </h3>
+            
+            <div style="display: grid; gap: 1.5rem;">
+      `;
+      
+      data.pharmacies.forEach(pharmacy => {
+        html += `
+          <div style="background: #f7fafc; border-radius: 15px; padding: 1.5rem; border: 2px solid #e2e8f0; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 15px 40px rgba(16,185,129,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <div>
+                <h4 style="color: #2d3748; font-size: 1.3rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-store" style="color: #667eea;"></i> ${pharmacy.name}
+                </h4>
+                <div style="color: #718096; font-size: 0.95rem; line-height: 1.6;">
+                  <div><i class="fas fa-map-marker-alt" style="color: #667eea; width: 20px;"></i> ${pharmacy.address}</div>
+                  <div><i class="fas fa-phone" style="color: #667eea; width: 20px;"></i> ${pharmacy.phone}</div>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; padding: 0.5rem 1rem; border-radius: 10px; margin-bottom: 0.5rem; font-weight: 700;">
+                  <i class="fas fa-star"></i> ${pharmacy.rating.toFixed(1)}
+                </div>
+                ${pharmacy.distance ? `
+                  <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 600; font-size: 0.9rem;">
+                    <i class="fas fa-route"></i> ${pharmacy.distance} km
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+            
+            <div style="border-top: 2px dashed #e2e8f0; padding-top: 1rem;">
+              <h5 style="color: #4a5568; font-size: 1rem; margin-bottom: 0.8rem;">
+                <i class="fas fa-pills"></i> Available Medicines:
+              </h5>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.8rem;">
+        `;
+        
+        pharmacy.medicines.forEach(med => {
+          html += `
+            <div style="background: white; padding: 0.8rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+              <div style="font-weight: 600; color: #2d3748; margin-bottom: 0.3rem;">
+                <i class="fas fa-capsules" style="color: #667eea;"></i> ${med.name}
+              </div>
+              <div style="font-size: 0.85rem; color: #718096; margin-bottom: 0.3rem;">${med.generic_name}</div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #10b981; font-weight: 700; font-size: 1.1rem;">₹${med.price.toFixed(2)}</span>
+                <span style="background: ${med.quantity > 10 ? '#d1fae5' : '#fef3c7'}; color: ${med.quantity > 10 ? '#065f46' : '#92400e'}; padding: 0.3rem 0.6rem; border-radius: 5px; font-size: 0.8rem; font-weight: 600;">
+                  Stock: ${med.quantity}
+                </span>
+              </div>
+            </div>
+          `;
+        });
+        
+        html += `
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += `
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap;">
+            <button onclick="location.reload()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+              <i class="fas fa-upload"></i> Upload Another Prescription
+            </button>
+            <button onclick="window.location.href='/'" style="background: white; color: #667eea; border: 2px solid #667eea; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+              <i class="fas fa-home"></i> Back to Home
+            </button>
+          </div>
+          
+          <div style="margin-top: 2rem; border-top: 2px solid #e2e8f0; padding-top: 2rem;">
+            <button onclick="document.getElementById('extracted-text').style.display = document.getElementById('extracted-text').style.display === 'none' ? 'block' : 'none'" style="background: #f7fafc; color: #4a5568; border: none; padding: 0.8rem 1.5rem; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%;">
+              <i class="fas fa-file-alt"></i> View Extracted Text (OCR)
+            </button>
+            <pre id="extracted-text" style="display: none; background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 10px; margin-top: 1rem; max-height: 400px; overflow-y: auto; font-size: 0.9rem; line-height: 1.6;">${data.extracted_text}</pre>
+          </div>
+        </div>
+      `;
+      
+      resultsSection.innerHTML = html;
+      document.querySelector('.container').appendChild(resultsSection);
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    function showTesseractInstallGuide() {
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.8); display: flex; align-items: center; 
+        justify-content: center; z-index: 10000; padding: 20px;
+      `;
+      
+      modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; padding: 2.5rem; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto;">
+          <h2 style="color: #dc2626; margin-bottom: 1rem; font-size: 1.8rem;">
+            <i class="fas fa-exclamation-triangle"></i> Tesseract OCR Not Installed
+          </h2>
+          
+          <p style="color: #4a5568; margin-bottom: 1.5rem; font-size: 1.1rem;">
+            The OCR engine (Tesseract) is required to extract text from prescription images.
+          </p>
+          
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <strong style="color: #92400e;">📥 Installation Required</strong>
+            <p style="color: #78350f; margin-top: 0.5rem; font-size: 0.95rem;">Please follow the steps below to install Tesseract OCR</p>
+          </div>
+          
+          <div style="background: #f0f9ff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.2rem;">
+              <i class="fab fa-windows"></i> Windows Installation
+            </h3>
+            <ol style="color: #374151; line-height: 1.8; padding-left: 1.2rem;">
+              <li>Download Tesseract installer from:<br>
+                <a href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" style="color: #2563eb; word-break: break-all; font-size: 0.9rem;">
+                  https://github.com/UB-Mannheim/tesseract/wiki
+                </a>
+              </li>
+              <li>Run <strong>tesseract-ocr-w64-setup-5.3.3.20231005.exe</strong></li>
+              <li>Install to default location: <code style="background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;">C:\\Program Files\\Tesseract-OCR\\</code></li>
+              <li><strong style="color: #dc2626;">Important:</strong> Restart your Django server after installation</li>
+              <li>Refresh this page and try uploading again</li>
+            </ol>
+          </div>
+          
+          <div style="background: #f0fdf4; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="color: #065f46; margin-bottom: 1rem; font-size: 1.2rem;">
+              <i class="fab fa-linux"></i> Linux/Ubuntu Installation
+            </h3>
+            <pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem;">sudo apt-get update
+sudo apt-get install tesseract-ocr
+sudo apt-get install poppler-utils</pre>
+          </div>
+          
+          <div style="background: #fef2f2; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="color: #991b1b; margin-bottom: 0.5rem; font-size: 1.1rem;">
+              <i class="fas fa-server"></i> Don't Forget!
+            </h3>
+            <p style="color: #7f1d1d; margin: 0;">After installing Tesseract, you MUST restart your Django development server for changes to take effect.</p>
+          </div>
+          
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button onclick="window.open('https://github.com/UB-Mannheim/tesseract/wiki', '_blank')" 
+              style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; cursor: pointer;">
+              <i class="fas fa-download"></i> Download Tesseract
+            </button>
+            <button onclick="this.closest('div').parentElement.remove()" 
+              style="background: #e5e7eb; color: #374151; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; cursor: pointer;">
+              Close
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+      });
+    }
+    
+    function showPopplerInstallGuide() {
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.8); display: flex; align-items: center; 
+        justify-content: center; z-index: 10000; padding: 20px;
+      `;
+      
+      modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; padding: 2.5rem; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto;">
+          <h2 style="color: #dc2626; margin-bottom: 1rem; font-size: 1.8rem;">
+            <i class="fas fa-file-pdf"></i> Poppler Not Installed (PDF Support)
+          </h2>
+          
+          <p style="color: #4a5568; margin-bottom: 1.5rem; font-size: 1.1rem;">
+            Poppler is required to process <strong>PDF files</strong>. You have two options:
+          </p>
+          
+          <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <strong style="color: #065f46;">✅ QUICK FIX: Use Image Files Instead</strong>
+            <p style="color: #047857; margin-top: 0.5rem; font-size: 0.95rem;">Upload your prescription as <strong>PNG, JPG, or JPEG</strong> - these work without Poppler!</p>
+          </div>
+          
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <strong style="color: #92400e;">📥 OR: Install Poppler for PDF Support</strong>
+          </div>
+          
+          <div style="background: #f0f9ff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.2rem;">
+              <i class="fab fa-windows"></i> Windows Installation
+            </h3>
+            <ol style="color: #374151; line-height: 1.8; padding-left: 1.2rem;">
+              <li>Download Poppler for Windows:<br>
+                <a href="https://github.com/oschwartz10612/poppler-windows/releases/" target="_blank" style="color: #2563eb; word-break: break-all; font-size: 0.9rem;">
+                  https://github.com/oschwartz10612/poppler-windows/releases/
+                </a>
+              </li>
+              <li>Download <strong>Release-XX.XX.X-0.zip</strong> (latest version)</li>
+              <li>Extract to <code style="background: #e5e7eb; padding: 2px 6px; border-radius: 4px;">C:\\Program Files\\poppler\\</code></li>
+              <li>Add to PATH: <code style="background: #e5e7eb; padding: 2px 6px; border-radius: 4px;">C:\\Program Files\\poppler\\Library\\bin</code></li>
+              <li><strong style="color: #dc2626;">Important:</strong> Restart Django server</li>
+            </ol>
+          </div>
+          
+          <div style="background: #f0fdf4; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="color: #065f46; margin-bottom: 1rem; font-size: 1.2rem;">
+              <i class="fab fa-linux"></i> Linux Installation
+            </h3>
+            <pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem;">sudo apt-get install poppler-utils</pre>
+          </div>
+          
+          <div style="background: #fef2f2; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="color: #991b1b; margin-bottom: 0.5rem; font-size: 1.1rem;">
+              <i class="fas fa-lightbulb"></i> Recommended Solution
+            </h3>
+            <p style="color: #7f1d1d; margin: 0;"><strong>For now, use PNG or JPG images</strong> instead of PDF files. This avoids the Poppler installation and works immediately!</p>
+          </div>
+          
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button onclick="location.reload()" 
+              style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; cursor: pointer;">
+              <i class="fas fa-image"></i> Upload Image Instead
+            </button>
+            <button onclick="window.open('https://github.com/oschwartz10612/poppler-windows/releases/', '_blank')" 
+              style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; cursor: pointer;">
+              <i class="fas fa-download"></i> Download Poppler
+            </button>
+            <button onclick="this.closest('div').parentElement.remove()" 
+              style="background: #e5e7eb; color: #374151; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; cursor: pointer;">
+              Close
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+      });
     }
   </script>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-section">
-        <h3>🏥 MediLocator</h3>
+        <h3>🏥 MediLocate</h3>
         <p>Your trusted partner in finding medicines quickly and easily across India.</p>
       </div>
       
       <div class="footer-section">
-        <h3>Quick Links</h3>
-        <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'about_us' %}">About Us</a>
-        <a href="{% url 'feedback' %}">Feedback</a>
-        {% if not user.is_authenticated %}
-          <a href="{% url 'login' %}">Login</a>
-          <a href="{% url 'register' %}">Register</a>
-        {% endif %}
-      </div>
-      
-      <div class="footer-section">
-        <h3>Services</h3>
-        <a href="#">Medicine Search</a>
-        <a href="#">Pharmacy Locator</a>
-        <a href="{% url 'prescription_scanner' %}">Prescription Upload</a>
-      </div>
-      
-      <div class="footer-section">
         <h3>Contact</h3>
-        <a href="mailto:support@medilocator.com">support@medilocator.com</a>
+        <a href="mailto:support@medilocate.com">support@medilocate.com</a>
         <a href="tel:+919240250346">+91 9240250346</a>
-        <a href="#">Mumbai, Maharashtra</a>
+        <p>Mumbai, Maharashtra</p>
+      </div>
+      
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
       </div>
     </div>
     
     <div class="footer-bottom">
-      <p>&copy; 2024 MediLocator. All rights reserved.</p>
+      <p>&copy; 2024 MediLocate. All rights reserved.</p>
     </div>
   </footer>
 
-  <!-- Floating Chatbot Widget -->
   {% include 'accounts/chatbot_widget.html' %}
 
 </body>

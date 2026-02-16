@@ -1,0 +1,172 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; }
+        
+        /* Sidebar */
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); color: white; overflow-y: auto; z-index: 1000; }
+        .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { font-size: 22px; margin-bottom: 5px; }
+        .sidebar-header p { font-size: 13px; opacity: 0.8; }
+        .sidebar-menu { padding: 20px 0; }
+        .menu-item { padding: 14px 25px; display: flex; align-items: center; gap: 12px; color: white; text-decoration: none; transition: all 0.3s; border-left: 3px solid transparent; }
+        .menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.1); border-left-color: white; }
+        .menu-item i { font-size: 18px; width: 20px; }
+        
+        /* Main Content */
+        .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; }
+        .top-bar { background: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .top-bar h1 { font-size: 26px; color: #2d3748; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .logout-btn { padding: 10px 20px; background: #f56565; color: white; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+        .logout-btn:hover { background: #e53e3e; transform: translateY(-2px); }
+        
+        /* Search Bar */
+        .search-bar { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
+        .search-bar input { flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+        .search-bar select { padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+        .btn-search { padding: 12px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        
+        /* Table */
+        .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        th { padding: 15px; text-align: left; font-weight: 600; }
+        td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        tbody tr:hover { background: #f7fafc; }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 13px; margin-right: 5px; }
+        .btn-edit { background: #48bb78; color: white; }
+        .btn-delete { background: #f56565; color: white; }
+        
+        /* Pagination */
+        .pagination { padding: 20px; text-align: center; display: flex; justify-content: center; gap: 10px; }
+        .pagination a { padding: 8px 12px; border: 2px solid #667eea; color: #667eea; text-decoration: none; border-radius: 6px; }
+        .pagination a:hover { background: #667eea; color: white; }
+        .pagination .active { background: #667eea; color: white; }
+        
+        .messages { margin-bottom: 20px; }
+        .alert { padding: 15px 20px; border-radius: 10px; margin-bottom: 15px; }
+        .alert-success { background: #c6f6d5; color: #22543d; border-left: 4px solid #38a169; }
+        .alert-error { background: #fed7d7; color: #742a2a; border-left: 4px solid #e53e3e; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-hospital"></i> MediLocate</h2>
+            <p>Administration Panel</p>
+        </div>
+        <nav class="sidebar-menu">
+            <a href="{% url 'admin_dashboard_main' %}" class="menu-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
+            <a href="{% url 'admin_reports' %}" class="menu-item"><i class="fas fa-chart-line"></i><span>Reports</span></a>
+            <a href="{% url 'admin_users' %}" class="menu-item active"><i class="fas fa-users"></i><span>Manage Users</span></a>
+            <a href="{% url 'admin_pharmacies' %}" class="menu-item"><i class="fas fa-pills"></i><span>Manage Pharmacies</span></a>
+            <a href="{% url 'admin_medicines' %}" class="menu-item"><i class="fas fa-capsules"></i><span>Manage Medicines</span></a>
+            <a href="{% url 'admin_feedback' %}" class="menu-item"><i class="fas fa-comments"></i><span>User Feedback</span></a>
+            <a href="{% url 'home' %}" class="menu-item"><i class="fas fa-globe"></i><span>View Site</span></a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h1><i class="fas fa-users"></i> Manage Users</h1>
+            <div class="user-info">
+                <span>Welcome, <strong>{{ user.username }}</strong></span>
+                <a href="{% url 'admin_logout' %}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <form method="GET" style="display: flex; gap: 15px; width: 100%; align-items: center;">
+                <input type="text" name="search" placeholder="Search by username, email, name..." value="{{ search }}">
+                <select name="role">
+                    <option value="">All Roles</option>
+                    <option value="admin" {% if role == 'admin' %}selected{% endif %}>Admin</option>
+                    <option value="pharmacy" {% if role == 'pharmacy' %}selected{% endif %}>Pharmacy</option>
+                    <option value="customer" {% if role == 'customer' %}selected{% endif %}>Customer</option>
+                </select>
+                <select name="status">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+                <button type="submit" class="btn-search"><i class="fas fa-search"></i> Search</button>
+                {% if search or role or status %}
+                <a href="{% url 'admin_users' %}" style="padding: 12px 20px; background: #718096; color: white; border-radius: 8px; text-decoration: none;"><i class="fas fa-times"></i> Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Users Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Joined</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_obj in users %}
+                    <tr>
+                        <td><strong>{{ user_obj.username }}</strong></td>
+                        <td>{{ user_obj.email }}</td>
+                        <td>{{ user_obj.first_name }} {{ user_obj.last_name }}</td>
+                        <td>{{ user_obj.date_joined|date:"M d, Y" }}</td>
+                        <td>
+                            {% if user_obj.is_active %}
+                            <span style="color: #48bb78; font-weight: 600;">✓ Active</span>
+                            {% else %}
+                            <span style="color: #f56565; font-weight: 600;">✗ Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_user_edit' user_obj.id %}" class="btn btn-edit"><i class="fas fa-edit"></i> Edit</a>
+                            <a href="{% url 'admin_user_delete' user_obj.id %}" class="btn btn-delete"><i class="fas fa-trash"></i> Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" style="text-align: center; padding: 40px; color: #a0aec0;">No users found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if users.has_other_pages %}
+            <div class="pagination">
+                {% if users.has_previous %}
+                <a href="?page=1&search={{ search }}&role={{ role }}&status={{ status }}">« First</a>
+                <a href="?page={{ users.previous_page_number }}&search={{ search }}&role={{ role }}&status={{ status }}">‹ Previous</a>
+                {% endif %}
+                <span class="active">Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
+                {% if users.has_next %}
+                <a href="?page={{ users.next_page_number }}&search={{ search }}&role={{ role }}&status={{ status }}">Next ›</a>
+                <a href="?page={{ users.paginator.num_pages }}&search={{ search }}&role={{ role }}&status={{ status }}">Last »</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

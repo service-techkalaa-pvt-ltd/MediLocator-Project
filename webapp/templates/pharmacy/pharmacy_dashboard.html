@@ -1,0 +1,186 @@
+{% extends 'pharmacy/pharmacy_base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="fas fa-tachometer-alt"></i>
+        Dashboard
+    </h1>
+    <div>
+        <span style="color: #666; font-size: 14px;">
+            <i class="far fa-clock"></i> Last updated: {{ now|date:"M d, Y H:i" }}
+        </span>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="font-size: 32px; font-weight: 700; margin-bottom: 5px;">{{ total_medicines }}</h3>
+                <p style="opacity: 0.9; font-size: 14px;">Total Medicines</p>
+            </div>
+            <i class="fas fa-pills" style="font-size: 48px; opacity: 0.3;"></i>
+        </div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="font-size: 32px; font-weight: 700; margin-bottom: 5px;">{{ in_stock }}</h3>
+                <p style="opacity: 0.9; font-size: 14px;">In Stock</p>
+            </div>
+            <i class="fas fa-check-circle" style="font-size: 48px; opacity: 0.3;"></i>
+        </div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="font-size: 32px; font-weight: 700; margin-bottom: 5px;">{{ low_stock }}</h3>
+                <p style="opacity: 0.9; font-size: 14px;">Low Stock Alerts</p>
+            </div>
+            <i class="fas fa-exclamation-triangle" style="font-size: 48px; opacity: 0.3;"></i>
+        </div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="font-size: 32px; font-weight: 700; margin-bottom: 5px;">{{ out_of_stock }}</h3>
+                <p style="opacity: 0.9; font-size: 14px;">Out of Stock</p>
+            </div>
+            <i class="fas fa-times-circle" style="font-size: 48px; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+    <div class="card-title">
+        <i class="fas fa-bolt"></i>
+        Quick Actions
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <a href="{% url 'pharmacy_add_medicine' %}" class="btn btn-primary" style="justify-content: center;">
+            <i class="fas fa-plus-circle"></i> Add New Medicine
+        </a>
+        <a href="{% url 'pharmacy_medicines' %}" class="btn btn-secondary" style="justify-content: center;">
+            <i class="fas fa-list"></i> View All Medicines
+        </a>
+        <a href="{% url 'pharmacy_orders' %}" class="btn btn-warning" style="justify-content: center;">
+            <i class="fas fa-file-prescription"></i> View Orders
+        </a>
+        <a href="{% url 'pharmacy_analytics' %}" class="btn" style="background: #17a2b8; color: white; justify-content: center;">
+            <i class="fas fa-chart-bar"></i> View Reports
+        </a>
+    </div>
+</div>
+
+<!-- Low Stock Alerts -->
+{% if low_stock_items %}
+<div class="card">
+    <div class="card-title">
+        <i class="fas fa-exclamation-triangle" style="color: #ffc107;"></i>
+        Low Stock Alerts
+    </div>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <th style="padding: 12px; text-align: left;">Medicine Name</th>
+                    <th style="padding: 12px; text-align: center;">Current Stock</th>
+                    <th style="padding: 12px; text-align: center;">Price</th>
+                    <th style="padding: 12px; text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in low_stock_items %}
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 12px;">
+                        <strong>{{ item.medicine.name }}</strong>
+                        {% if item.medicine.generic_name %}
+                        <br><small style="color: #666;">{{ item.medicine.generic_name }}</small>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        <span style="background: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 5px; font-weight: 600;">
+                            {{ item.quantity }}
+                        </span>
+                    </td>
+                    <td style="padding: 12px; text-align: center;">₹{{ item.price }}</td>
+                    <td style="padding: 12px; text-align: center;">
+                        <a href="{% url 'pharmacy_edit_medicine' item.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i> Update Stock
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Activity -->
+<div class="card">
+    <div class="card-title">
+        <i class="fas fa-history"></i>
+        Recent Activity
+    </div>
+    <div style="border-left: 3px solid #11998e; padding-left: 20px;">
+        <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+            <strong>Welcome to your pharmacy dashboard!</strong><br>
+            <small style="color: #666;">You can manage your inventory, track orders, and view analytics from here.</small>
+        </div>
+        {% if recent_updates %}
+            {% for update in recent_updates %}
+            <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                <strong>{{ update.action }}</strong><br>
+                <small style="color: #666;">{{ update.timestamp|date:"M d, Y H:i" }}</small>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pharmacy Info -->
+<div class="card">
+    <div class="card-title">
+        <i class="fas fa-store-alt"></i>
+        Your Pharmacy Information
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div>
+            <label style="font-weight: 600; color: #666; display: block; margin-bottom: 5px;">Pharmacy Name</label>
+            <p style="font-size: 16px;">{{ pharmacy.name }}</p>
+        </div>
+        <div>
+            <label style="font-weight: 600; color: #666; display: block; margin-bottom: 5px;">Address</label>
+            <p style="font-size: 16px;">{{ pharmacy.address }}</p>
+        </div>
+        <div>
+            <label style="font-weight: 600; color: #666; display: block; margin-bottom: 5px;">Phone</label>
+            <p style="font-size: 16px;">{{ pharmacy.phone }}</p>
+        </div>
+        <div>
+            <label style="font-weight: 600; color: #666; display: block; margin-bottom: 5px;">Status</label>
+            <p style="font-size: 16px;">
+                {% if pharmacy.verified %}
+                <span style="background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 5px; font-weight: 600;">
+                    <i class="fas fa-check-circle"></i> Verified
+                </span>
+                {% else %}
+                <span style="background: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 5px; font-weight: 600;">
+                    <i class="fas fa-clock"></i> Pending Verification
+                </span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

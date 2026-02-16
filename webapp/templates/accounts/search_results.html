@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results - MediLocator</title>
+    <title>Search Results - MediLocate</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -335,6 +335,32 @@
         let allPharmacies = [];
         let userLocation = null; // Store user's GPS coordinates
 
+        // City center coordinates for fallback
+        const cityCenters = {
+            'bhopal': { lat: 23.2599, lon: 77.4126 },
+            'delhi': { lat: 28.6139, lon: 77.2090 },
+            'mumbai': { lat: 19.0760, lon: 72.8777 },
+            'bangalore': { lat: 12.9716, lon: 77.5946 },
+            'pune': { lat: 18.5204, lon: 73.8567 },
+            'hyderabad': { lat: 17.3850, lon: 78.4867 },
+            'chennai': { lat: 13.0827, lon: 80.2707 },
+            'kolkata': { lat: 22.5726, lon: 88.3639 },
+            'ahmedabad': { lat: 23.0225, lon: 72.5714 },
+            'jaipur': { lat: 26.9124, lon: 75.7873 },
+            'lucknow': { lat: 26.8467, lon: 80.9462 },
+            'chandigarh': { lat: 30.7333, lon: 76.7794 },
+            'indore': { lat: 22.7196, lon: 75.8577 },
+            'kochi': { lat: 9.9312, lon: 76.2673 },
+            'surat': { lat: 21.1458, lon: 72.1640 },
+            'visakhapatnam': { lat: 17.6869, lon: 83.2185 },
+            'nagpur': { lat: 21.1458, lon: 79.0882 },
+            'vadodara': { lat: 22.3072, lon: 73.1812 },
+            'ghaziabad': { lat: 28.6692, lon: 77.4538 },
+            'ludhiana': { lat: 30.9010, lon: 75.8573 },
+            'pimpri-chinchwad': { lat: 18.6277, lon: 73.8009 },
+            'navi mumbai': { lat: 19.0330, lon: 73.0297 }
+        };
+
         // Get URL parameter
         function getUrlParameter(name) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -383,21 +409,59 @@
         document.addEventListener('DOMContentLoaded', function() {
             currentCity = getUrlParameter('city') || '';
             const mode = getUrlParameter('mode') || '';
+            const medicines = getUrlParameter('medicines') || '';
+            const lat = getUrlParameter('lat');
+            const lon = getUrlParameter('lon');
             
-            console.log('Page initialized:', { city: currentCity, mode: mode });
+            console.log('═══ PAGE INIT ═══');
+            console.log('City:', currentCity);
+            console.log('Mode:', mode);
+            console.log('Medicines:', medicines);
+            console.log('Location:', lat, lon);
             
-            // Request user's location first
-            getUserLocation().then(() => {
-                if (mode === 'city' && currentCity) {
-                    document.getElementById('pageTitle').textContent = `Pharmacies in ${currentCity.toUpperCase()}`;
-                    document.getElementById('searchInfo').textContent = `Showing all pharmacy stores in ${currentCity}`;
-                    loadCityPharmacies(currentCity);
-                } else {
-                    document.getElementById('emptyState').style.display = 'block';
-                    document.getElementById('resultsContainer').style.display = 'none';
-                    document.getElementById('emptyMessage').textContent = 'Invalid search parameters. Please search from the home page.';
+            // Check if this is a prescription scan result
+            if (medicines) {
+                console.log('✅ Prescription scan mode detected');
+                
+                // Medicines from prescription scanner
+                const medicineList = medicines.split(',').map(m => m.trim()).filter(m => m);
+                
+                // Set user location if provided
+                if (lat && lon) {
+                    userLocation = {
+                        lat: parseFloat(lat),
+                        lon: parseFloat(lon)
+                    };
+                    console.log('📍 User location from URL:', userLocation);
                 }
-            });
+                
+                document.getElementById('pageTitle').textContent = `Prescription Results`;
+                document.getElementById('searchInfo').innerHTML = `
+                    <strong>Extracted Medicines:</strong> ${medicineList.join(', ')}<br>
+                    ${userLocation ? '<span style="color: #10b981;"><i class="fas fa-location-arrow"></i> Sorted by distance from your location</span>' : '<span style="color: #f59e0b;"><i class="fas fa-star"></i> Sorted by rating</span>'}
+                `;
+                
+                // Display results from Django context
+                console.log('🔄 Calling displayPrescriptionResults()...');
+                displayPrescriptionResults();
+                
+            } else if (mode === 'city' && currentCity) {
+                console.log('✅ City search mode detected');
+                // Use city center coordinates for distance calculation
+                const cityKey = currentCity.toLowerCase();
+                if (cityCenters[cityKey]) {
+                    userLocation = cityCenters[cityKey];
+                    console.log('📍 Using city center location:', userLocation);
+                }
+                document.getElementById('pageTitle').textContent = `Pharmacies in ${currentCity.toUpperCase()}`;
+                document.getElementById('searchInfo').textContent = `Showing all pharmacy stores in ${currentCity}`;
+                loadCityPharmacies(currentCity);
+            } else {
+                console.log('❌ No valid search parameters');
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('resultsContainer').style.display = 'none';
+                document.getElementById('emptyMessage').textContent = 'Invalid search parameters. Please search from the home page.';
+            }
         });
 
         // Load all pharmacies in a city
@@ -405,6 +469,10 @@
             let url = `/api/search-by-city/?city=${encodeURIComponent(city)}&sort=rating`;
             if (medicine) {
                 url += `&medicine=${encodeURIComponent(medicine)}`;
+            }
+            // Add user location for distance-based secondary sorting
+            if (userLocation && userLocation.lat && userLocation.lon) {
+                url += `&lat=${userLocation.lat}&lon=${userLocation.lon}`;
             }
             
             console.log('Fetching:', url);
@@ -475,7 +543,18 @@
                         pharmacy.latitude, 
                         pharmacy.longitude
                     );
-                    distanceHtml = `<div style="color: #06b6d4; font-weight: 600; margin-top: 0.5rem;"><i class="fas fa-route"></i> ${distance} km from your location</div>`;
+                    // Format distance display (show meters if < 1 km, otherwise km)
+                    let distanceText;
+                    if (distance < 1) {
+                        const meters = Math.round(distance * 1000);
+                        distanceText = `${meters} m from your location`;
+                    } else {
+                        distanceText = `${distance} km from your location`;
+                    }
+                    // Don't show distance if it's invalid (999999 means no location data)
+                    if (pharmacy.distance && pharmacy.distance < 999999) {
+                        distanceHtml = `<div style="color: #06b6d4; font-weight: 600; margin-top: 0.5rem;"><i class="fas fa-route"></i> ${distanceText}</div>`;
+                    }
                 }
                 
                 // Medicines HTML
@@ -497,10 +576,18 @@
                     `;
                 }
                 
+                // Calculate rating color: red (poor), yellow (avg), green (good)
+                let ratingColor = '#ef4444'; // red for poor (< 3.0)
+                if (pharmacy.rating >= 4.0) {
+                    ratingColor = '#10b981'; // green for good (>= 4.0)
+                } else if (pharmacy.rating >= 3.0) {
+                    ratingColor = '#f59e0b'; // yellow/orange for average (3.0 - 3.9)
+                }
+                
                 card.innerHTML = `
                     <div class="pharmacy-header">
                         <div class="pharmacy-name">${pharmacy.name}</div>
-                        <div class="pharmacy-rating">
+                        <div class="pharmacy-rating" style="color: ${ratingColor};">
                             <i class="fas fa-star"></i> ${pharmacy.rating}
                         </div>
                     </div>
@@ -566,6 +653,169 @@
                 });
             }
         });
+
+        // Display prescription scan results from Django context
+        function displayPrescriptionResults() {
+            console.log('═══ DISPLAY PRESCRIPTION RESULTS ═══');
+            
+            try {
+                const container = document.getElementById('resultsContainer');
+                const emptyState = document.getElementById('emptyState');
+                const resultsCount = document.getElementById('resultsCount');
+                
+                console.log('Elements found:', {
+                    container: !!container,
+                    emptyState: !!emptyState,
+                    resultsCount: !!resultsCount
+                });
+                
+                // Get Django context data - need to properly serialize Python objects
+                const pharmaciesData = [
+                    {% for item in pharmacies %}
+                    {
+                        pharmacy: {
+                            id: {{ item.pharmacy.id }},
+                            name: "{{ item.pharmacy.name|escapejs }}",
+                            address: "{{ item.pharmacy.address|escapejs }}",
+                            city: "{{ item.pharmacy.city|escapejs }}",
+                            phone: "{{ item.pharmacy.phone|escapejs }}",
+                            rating: {{ item.pharmacy.rating|default:0 }}
+                        },
+                        medicines: [
+                            {% for med in item.medicines %}
+                            {
+                                name: "{{ med.name|escapejs }}",
+                                generic_name: "{{ med.generic_name|escapejs }}",
+                                price: {{ med.price|default:0 }},
+                                quantity: {{ med.quantity|default:0 }}
+                            }{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ],
+                        distance: {{ item.distance|default:"null" }}
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ];
+                
+                const medicinesData = {{ medicines|safe }};
+                const hasLocation = {{ has_location|lower }};
+                const totalPharmacies = {{ total_pharmacies }};
+                const totalMedicines = {{ total_medicines }};
+                
+                console.log('📊 Data loaded:', {
+                    pharmacies: pharmaciesData.length,
+                    medicines: medicinesData,
+                    hasLocation: hasLocation,
+                    totalPharmacies: totalPharmacies,
+                    totalMedicines: totalMedicines
+                });
+                
+                if (pharmaciesData.length > 0) {
+                    console.log('📦 Sample pharmacy:', pharmaciesData[0]);
+                }
+                
+                // Update counts
+                resultsCount.innerHTML = `
+                    <i class="fas fa-pills"></i> ${totalMedicines} medicine${totalMedicines !== 1 ? 's' : ''} found in ${totalPharmacies} pharmacy store${totalPharmacies !== 1 ? 's' : ''}
+                `;
+                
+                if (pharmaciesData.length === 0) {
+                    console.log('❌ No pharmacies found');
+                    // No pharmacies found
+                    emptyState.style.display = 'block';
+                    container.style.display = 'none';
+                    document.getElementById('emptyMessage').innerHTML = 
+                        `No pharmacies found with the medicine "<strong>${medicinesData.join(', ')}</strong>".<br><br>
+                        This might happen if:<br>
+                        • The medicine is not in our database<br>
+                        • No pharmacies currently stock this medicine<br>
+                        • Try searching for a similar medicine name`;
+                } else {
+                    console.log('✅ Displaying', pharmaciesData.length, 'pharmacies');
+                    // Display pharmacies
+                    emptyState.style.display = 'none';
+                    container.style.display = 'grid';
+                    container.innerHTML = '';
+                    
+                    pharmaciesData.forEach((data, index) => {
+                        console.log(`Building card ${index + 1}...`);
+                        const pharmacy = data.pharmacy;
+                        const medicines = data.medicines;
+                        
+                        const card = document.createElement('div');
+                        card.className = 'pharmacy-card';
+                        
+                        // Distance display
+                        let distanceHtml = '';
+                        if (data.distance && data.distance < 999999) {
+                            distanceHtml = `<div style="color: #06b6d4; font-weight: 600; margin-top: 0.5rem;">
+                                <i class="fas fa-route"></i> ${data.distance.toFixed(2)} km from your location
+                            </div>`;
+                        }
+                        
+                        // Medicines list with prices
+                        let medicinesHtml = '';
+                        if (medicines.length > 0) {
+                            medicinesHtml = `
+                                <div class="medicines-section">
+                                    <div class="medicines-title">
+                                        <i class="fas fa-pills"></i> Available Medicines (${medicines.length})
+                                    </div>
+                                    <div class="medicines-list">
+                                        ${medicines.map(med => {
+                                            const priceTag = med.price ? ` - ₹${med.price}` : '';
+                                            const stockTag = med.quantity > 0 ? ` (${med.quantity} in stock)` : '';
+                                            return `<span class="medicine-tag">${med.name}${priceTag}${stockTag}</span>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    
+                        // Rating color
+                        let ratingColor = '#ef4444';
+                        if (pharmacy.rating >= 4.0) {
+                            ratingColor = '#10b981';
+                        } else if (pharmacy.rating >= 3.0) {
+                            ratingColor = '#f59e0b';
+                        }
+                        
+                        card.innerHTML = `
+                            <div class="pharmacy-header">
+                                <div class="pharmacy-name">${pharmacy.name}</div>
+                                <div class="pharmacy-rating" style="color: ${ratingColor};">
+                                    <i class="fas fa-star"></i> ${pharmacy.rating}
+                                </div>
+                            </div>
+                            <div class="pharmacy-info">
+                                <div><i class="fas fa-map-marker-alt"></i> ${pharmacy.address}</div>
+                                <div><i class="fas fa-city"></i> ${pharmacy.city}</div>
+                                <div><i class="fas fa-phone"></i> ${pharmacy.phone || 'Not available'}</div>
+                                ${distanceHtml}
+                            </div>
+                            ${medicinesHtml}
+                        `;
+                        
+                        container.appendChild(card);
+                    });
+                    
+                    console.log('✅ All cards built successfully');
+                }
+                
+                // Hide medicine search box for prescription results
+                document.getElementById('medicineSearchBox').style.display = 'none';
+                
+            } catch (error) {
+                console.error('❌ Error in displayPrescriptionResults:', error);
+                console.error('Stack:', error.stack);
+                document.getElementById('resultsCount').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error loading results';
+                document.getElementById('resultsContainer').innerHTML = `
+                    <div class="loading" style="color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle"></i><br>
+                        Error loading pharmacies. Please check console for details.
+                    </div>
+                `;
+            }
+        }
     </script>
 </body>
 </html>

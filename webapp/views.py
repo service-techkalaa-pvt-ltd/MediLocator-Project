@@ -11,12 +11,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import *
-from .forms import CreateUserForm
+from .forms import CreateUserForm, FeedbackForm, PharmacyRegistrationForm
 import joblib
 from django.http import JsonResponse
 import difflib
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 import json
 from django.http import FileResponse
 import re
@@ -72,8 +73,163 @@ def home(request):
 
 
 def search_results_page(request):
-    """Display search results page"""
-    return render(request, 'accounts/search_results.html')
+    """Display search results page with pharmacy results for medicines"""
+    from math import radians, cos, sin, asin, sqrt
+    
+    # Get parameters from URL
+    medicines_param = request.GET.get('medicines', '')
+    latitude = request.GET.get('lat')
+    longitude = request.GET.get('lon')
+    
+    # Parse medicine names
+    medicine_names = [m.strip() for m in medicines_param.split(',') if m.strip()] if medicines_param else []
+    
+    context = {
+        'medicines': medicine_names,
+        'pharmacies': [],
+        'has_location': False,
+        'total_medicines': len(medicine_names),
+        'total_pharmacies': 0
+    }
+    
+    if not medicine_names:
+        # No medicines provided, show empty state
+        return render(request, 'accounts/search_results.html', context)
+    
+    # Check location
+    has_location = bool(latitude and longitude)
+    if has_location:
+        try:
+            latitude = float(latitude)
+            longitude = float(longitude)
+            context['has_location'] = True
+            context['user_lat'] = latitude
+            context['user_lon'] = longitude
+        except (ValueError, TypeError):
+            has_location = False
+    
+    # Haversine distance function
+    def haversine(lon1, lat1, lon2, lat2):
+        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * asin(sqrt(a))
+        km = 6371 * c
+        return round(km, 2)
+    
+    # Search for medicines in database with fuzzy matching
+    medicines_found = []
+    medicine_ids = []
+    
+    # Get all medicines for fuzzy matching
+    from rapidfuzz import fuzz, process
+    all_medicines = {m.name: m for m in Medicine.objects.all()}
+    
+    for med_name in medicine_names:
+        # Try exact match first
+        try:
+            medicine = Medicine.objects.get(name__iexact=med_name)
+            if medicine.id not in medicine_ids:
+                medicine_ids.append(medicine.id)
+                medicines_found.append({
+                    'name': medicine.name,
+                    'generic_name': medicine.generic_name,
+                    'searched_for': med_name
+                })
+                continue
+        except Medicine.DoesNotExist:
+            pass
+        
+        # Try fuzzy matching (80%+ similarity)
+        fuzzy_matches = process.extract(
+            med_name, 
+            all_medicines.keys(), 
+            scorer=fuzz.ratio,
+            limit=5
+        )
+        
+        for match_name, score, _ in fuzzy_matches:
+            if score >= 80:  # 80% or higher similarity
+                medicine = all_medicines[match_name]
+                if medicine.id not in medicine_ids:
+                    medicine_ids.append(medicine.id)
+                    medicines_found.append({
+                        'name': medicine.name,
+                        'generic_name': medicine.generic_name,
+                        'searched_for': med_name,
+                        'match_score': score
+                    })
+        
+        # If still no match, try partial contains
+        if not any(m['searched_for'] == med_name for m in medicines_found):
+            matches = Medicine.objects.filter(name__icontains=med_name)[:2]
+            for medicine in matches:
+                if medicine.id not in medicine_ids:
+                    medicine_ids.append(medicine.id)
+                    medicines_found.append({
+                        'name': medicine.name,
+                        'generic_name': medicine.generic_name,
+                        'searched_for': med_name,
+                        'match_score': 70
+                    })
+    
+    context['medicines_found'] = medicines_found
+    
+    if not medicine_ids:
+        # No medicines found in database
+        return render(request, 'accounts/search_results.html', context)
+    
+    # Find pharmacies with these medicines
+    inventory_items = Inventory.objects.filter(
+        medicine_id__in=medicine_ids,
+        quantity__gt=0
+    ).select_related('pharmacy', 'medicine')
+    
+    # Group by pharmacy
+    pharmacy_dict = {}
+    for item in inventory_items:
+        pharmacy_id = item.pharmacy.id
+        
+        if pharmacy_id not in pharmacy_dict:
+            pharmacy_dict[pharmacy_id] = {
+                'pharmacy': item.pharmacy,
+                'medicines': [],
+                'distance': None
+            }
+        
+        pharmacy_dict[pharmacy_id]['medicines'].append({
+            'name': item.medicine.name,
+            'generic_name': item.medicine.generic_name,
+            'price': float(item.price),
+            'quantity': item.quantity
+        })
+    
+    # Calculate distances if location available
+    if has_location:
+        for pharmacy_id, data in pharmacy_dict.items():
+            pharmacy = data['pharmacy']
+            if pharmacy.latitude and pharmacy.longitude:
+                distance = haversine(
+                    longitude, latitude,
+                    pharmacy.longitude, pharmacy.latitude
+                )
+                data['distance'] = distance
+    
+    # Sort pharmacies
+    pharmacy_list = list(pharmacy_dict.values())
+    
+    if has_location:
+        # Sort by distance (nearest first)
+        pharmacy_list.sort(key=lambda x: x['distance'] if x['distance'] is not None else float('inf'))
+    else:
+        # Sort by rating
+        pharmacy_list.sort(key=lambda x: x['pharmacy'].rating if x['pharmacy'].rating else 0, reverse=True)
+    
+    context['pharmacies'] = pharmacy_list
+    context['total_pharmacies'] = len(pharmacy_list)
+    
+    return render(request, 'accounts/search_results.html', context)
 
 
 @login_required(login_url='login')
@@ -223,26 +379,258 @@ def predict(request):
 
 @csrf_exempt
 def chatbot_response(request):
+    """Enhanced chatbot with automatic medicine search capability"""
     if request.method == "POST":
-        data = json.loads(request.body)
-        user_message = data.get("user_message", "").lower()
+        try:
+            import math
+            import uuid
+            
+            data = json.loads(request.body)
+            user_message = data.get("user_message", "").strip()
+            message_lower = user_message.lower()
+            user_lat = data.get("latitude")
+            user_lon = data.get("longitude")
+            session_id = data.get("session_id", str(uuid.uuid4()))
 
-        responses = {
-            "breakfast diet": "A healthy breakfast includes protein, fiber, and healthy fats. Try eggs, oatmeal, or fruit smoothies.",
-            "lunch diet": "For lunch, opt for lean proteins like chicken or tofu with veggies and whole grains.",
-            "dinner diet": "Dinner should be light with soups, salads, and grilled proteins.",
-            "exercise tips": "Regular exercise boosts health! Check this video: https://www.youtube.com/embed/TjzwohzLJgA"
-        }
-        disease_links = {
-            "diabetes": "Watch this YouTube video for more details: https://www.youtube.com/embed/-uK8a80vyeI",
-            "hypertension": "Watch this video: https://www.youtube.com/embed/TjzwohzLJgA",
-            "malaria": "Check this link: https://www.youtube.com/embed/zWf5ZaCo0BI",
-            "heart disease": "Watch this: https://www.youtube.com/embed/SFWvoNZtUkk",
-            "normal health": "Healthy living tips here: https://www.youtube.com/embed/PG2f3GF5RlI"
-        }
+            # Get or create conversation session
+            conversation = None
+            if request.user.is_authenticated:
+                conversation, created = ChatbotConversation.objects.get_or_create(
+                    session_id=session_id,
+                    defaults={'user': request.user}
+                )
+            
+            # Save user message
+            if conversation:
+                conversation.add_message('user', user_message)
+                conversation.save()
 
-        bot_reply = responses.get(user_message, disease_links.get(user_message, "Sorry, I don't understand that."))
-        return JsonResponse({"bot_reply": bot_reply})
+            # Expanded FAQ responses
+            faq_responses = {
+                # Greetings
+                "hello": "Hello! 👋 Welcome to MediLocate. I'm here to help you with:<br>• Finding medicines and pharmacies<br>• Uploading prescriptions<br>• Answering health questions<br><br>What can I help you with today?",
+                "hi": "Hi there! 😊 How can I assist you today? Try asking about medicines, pharmacies, or our services!",
+                "hey": "Hey! Welcome to MediBot. What would you like to know?",
+                "good morning": "Good morning! ☀️ How can I help you today?",
+                "good afternoon": "Good afternoon! How may I assist you?",
+                "good evening": "Good evening! 🌙 What can I do for you today?",
+                
+                # Goodbyes
+                "bye": "Goodbye! 👋 Stay healthy and take care!",
+                "goodbye": "Thank you for using MediLocate! Feel free to come back anytime. Stay healthy! 💚",
+                "see you": "See you soon! Take care of your health! 😊",
+                
+                # Services & Help
+                "services": "🏥 <strong>Our Services:</strong><br>1. 💊 <strong>Medicine Search</strong> - Find medicines and check availability<br>2. 📍 <strong>Pharmacy Locator</strong> - Find nearby pharmacies with your medicines<br>3. 📋 <strong>Prescription Upload</strong> - Upload and analyze prescriptions<br>4. 🤖 <strong>AI Health Assistant</strong> - Get answers to health questions<br><br>What would you like to try?",
+                "help": "🆘 <strong>How I Can Help:</strong><br>• Search for any medicine by name<br>• Find pharmacies near you<br>• Answer questions about our services<br>• Guide you through prescription upload<br>• Provide health information<br><br>Just type your question or medicine name!",
+                "what can you do": "I can help you:<br>✓ Find medicines and their availability<br>✓ Locate nearby pharmacies<br>✓ Upload prescriptions<br>✓ Answer questions about medicines and health<br><br>Try asking me anything!",
+                
+                # Prescription Upload FAQs
+                "how do i upload my prescription": "📋 <strong>To Upload Your Prescription:</strong><br>1. Click on the '<strong>Upload Prescription</strong>' button in the menu<br>2. Take a clear photo of your prescription or select an existing image<br>3. Upload the image - our AI will analyze it<br>4. We'll extract medicine names and help you find nearby pharmacies<br><br>Need more help? Just ask!",
+                "upload prescription": "You can upload prescriptions by clicking the 'Upload Prescription' button on our homepage or in the main menu. Our AI will scan and extract medicine names for you! 📸",
+                "prescription upload": "To upload a prescription, go to the main menu and select 'Upload Prescription'. Make sure the image is clear and readable! 📋",
+                "how to upload": "Click on 'Upload Prescription' from the menu, then select or capture an image of your prescription. Our system will process it automatically! ✨",
+                
+                # Medicine Search FAQs
+                "how do i search for medicines": "🔍 <strong>Searching for Medicines:</strong><br>1. Simply type the medicine name (e.g., 'Paracetamol')<br>2. You can also search by generic name<br>3. I'll show you pharmacies that have it in stock<br>4. If I have your location, I'll sort by nearest pharmacies<br><br>Try searching now!",
+                "how to search": "Just type any medicine name and I'll find it for you! Example: Try typing 'Aspirin' or 'Crocin'. 🔍",
+                "search medicines": "Type any medicine name directly in the chat, and I'll search for pharmacies that have it in stock! 💊",
+                
+                # Pharmacy Locator FAQs  
+                "find pharmacies near me": "📍 <strong>Finding Nearby Pharmacies:</strong><br>1. Share your location when prompted<br>2. Search for a medicine<br>3. I'll show pharmacies sorted by distance<br>4. View pharmacy details, ratings, and contact info<br><br>You can also browse all pharmacies without searching for a specific medicine!",
+                "find pharmacies": "To find pharmacies, either search for a medicine or click 'Find Pharmacies' in the menu. Enable location access for best results! 📍",
+                "nearby pharmacies": "I can show you nearby pharmacies! Just allow location access and search for a medicine, or browse all pharmacies in your area. 🏥",
+                "pharmacies near me": "Enable location sharing and I'll find the closest pharmacies to you with their ratings, contact details, and available medicines! 📍",
+                
+                # Login/Account FAQs
+                "help me with login": "🔐 <strong>Login Help:</strong><br>• Click '<strong>Login</strong>' in the top menu<br>• Enter your email and password<br>• Forgot password? Click 'Reset Password'<br>• Don't have an account? Click 'Register' to create one<br><br>Need specific help? Let me know!",
+                "how to login": "Click the 'Login' button in the top-right corner, then enter your credentials. New user? You can register for free! 🔑",
+                "login help": "For login issues: Check your email/password, clear browser cache, or use 'Forgot Password' to reset. Still stuck? Contact support! 💁",
+                "register": "To create an account, click 'Register' in the menu, fill in your details (name, email, password), and submit! It's free and quick! ✅",
+                "create account": "Click 'Register' in the top menu to create your free account. You'll need an email address and password. Simple! 📝",
+                
+                # About/General
+                "what is medilocate": "MediLocate is your intelligent medicine and pharmacy finder! We help you locate medicines, find nearby pharmacies, and manage your prescriptions with AI assistance. 🏥💊",
+                "about": "MediLocate helps you find medicines and pharmacies quickly. We use AI to make healthcare more accessible! 🚀",
+                "who are you": "I'm MediBot, your AI health assistant! I help you find medicines, locate pharmacies, and answer health-related questions. 🤖💙",
+                "thank you": "You're welcome! 😊 Feel free to ask anything else!",
+                "thanks": "Happy to help! If you need anything else, just ask! 💚"
+            }
+            
+            disease_links = {
+                "diabetes": "Watch this YouTube video for more details: https://www.youtube.com/embed/-uK8a80vyeI",
+                "hypertension": "Watch this video: https://www.youtube.com/embed/TjzwohzLJgA",
+                "malaria": "Check this link: https://www.youtube.com/embed/zWf5ZaCo0BI",
+                "heart disease": "Watch this: https://www.youtube.com/embed/SFWvoNZtUkk",
+                "normal health": "Healthy living tips here: https://www.youtube.com/embed/PG2f3GF5RlI"
+            }
+
+            # Check for FAQ responses first
+            if message_lower in faq_responses:
+                bot_reply = faq_responses[message_lower]
+                if conversation:
+                    conversation.add_message('bot', bot_reply)
+                    conversation.save()
+                return JsonResponse({
+                    "type": "text",
+                    "bot_reply": bot_reply,
+                    "session_id": session_id
+                })
+            
+            # Check for partial matches in FAQs (more flexible matching)
+            for key, response in faq_responses.items():
+                if key in message_lower or message_lower in key:
+                    bot_reply = response
+                    if conversation:
+                        conversation.add_message('bot', bot_reply)
+                        conversation.save()
+                    return JsonResponse({
+                        "type": "text",
+                        "bot_reply": bot_reply,
+                        "session_id": session_id
+                    })
+            
+            if message_lower in disease_links:
+                bot_reply = f'<a href="{disease_links[message_lower]}" target="_blank">Click here to watch the video about {user_message}</a>'
+                if conversation:
+                    conversation.add_message('bot', bot_reply)
+                    conversation.save()
+                return JsonResponse({
+                    "type": "text",
+                    "bot_reply": bot_reply,
+                    "session_id": session_id
+                })
+
+            # Detect if this is likely a question vs a medicine search
+            question_indicators = [
+                'how', 'what', 'where', 'when', 'why', 'who', 'can', 'do', 'does', 
+                'is', 'are', 'should', 'could', 'would', 'help', 'explain', 'tell me',
+                '?', 'which', 'will'
+            ]
+            
+            is_question = any(indicator in message_lower for indicator in question_indicators)
+            
+            # If it's a question and we haven't answered it with FAQs, provide helpful response
+            if is_question and len(user_message.split()) > 2:
+                bot_reply = "Thank you for asking! 😊<br><br>I'm here to help with:<br>• Finding medicines and pharmacies<br>• Prescription uploads<br>• General health information<br><br>However, I don't have specific information about your question right now. Please try:<br>• Rephrasing your question<br>• Asking about our services (type 'help')<br>• Searching for a medicine name<br><br>Or you can contact our support team for more assistance! 💁‍♀️"
+                if conversation:
+                    conversation.add_message('bot', bot_reply)
+                    conversation.save()
+                return JsonResponse({
+                    "type": "text",
+                    "bot_reply": bot_reply,
+                    "session_id": session_id
+                })
+
+            # AUTO-DETECT MEDICINE SEARCH
+            # Only search for medicine if it looks like a medicine query (not a question)
+            medicine_keywords = ['find', 'search', 'locate', 'need', 'want', 'looking for', 'pharmacy', 'store', 'available', 'price', 'buy', 'get']
+            is_medicine_query = any(keyword in message_lower for keyword in medicine_keywords) or (len(user_message.split()) <= 3 and not is_question)
+            
+            # Search for medicine in database
+            medicines = Medicine.objects.filter(
+                name__icontains=user_message
+            ) | Medicine.objects.filter(
+                generic_name__icontains=user_message
+            )
+            
+            if medicines.exists():
+                # Medicine found - search for pharmacies
+                medicine_ids = list(medicines.values_list('id', flat=True))
+                medicine_list = list(medicines.values('id', 'name', 'generic_name', 'category', 'common_doses', 'description')[:5])
+                
+                # Find pharmacies with this medicine
+                inventory = Inventory.objects.filter(
+                    medicine_id__in=medicine_ids,
+                    quantity__gt=0
+                ).select_related('pharmacy', 'medicine').values(
+                    'pharmacy__id', 'pharmacy__name', 'pharmacy__address', 'pharmacy__city',
+                    'pharmacy__phone', 'pharmacy__latitude', 'pharmacy__longitude', 
+                    'pharmacy__rating', 'medicine__name', 'medicine__generic_name',
+                    'price', 'quantity'
+                )
+                
+                # Group by pharmacy
+                pharmacy_dict = {}
+                for item in inventory:
+                    pharm_id = item['pharmacy__id']
+                    if pharm_id not in pharmacy_dict:
+                        pharmacy_dict[pharm_id] = {
+                            'id': item['pharmacy__id'],
+                            'name': item['pharmacy__name'],
+                            'address': item['pharmacy__address'],
+                            'city': item['pharmacy__city'],
+                            'phone': item['pharmacy__phone'],
+                            'latitude': item['pharmacy__latitude'],
+                            'longitude': item['pharmacy__longitude'],
+                            'rating': item['pharmacy__rating'],
+                            'medicines': []
+                        }
+                    
+                    pharmacy_dict[pharm_id]['medicines'].append({
+                        'name': item['medicine__name'],
+                        'generic_name': item['medicine__generic_name'],
+                        'price': float(item['price']) if item['price'] else 0,
+                        'quantity': item['quantity']
+                    })
+                
+                pharmacy_list = list(pharmacy_dict.values())
+                
+                # Calculate distances if user location provided
+                if user_lat and user_lon:
+                    for pharmacy in pharmacy_list:
+                        dlat = math.radians(pharmacy['latitude'] - float(user_lat))
+                        dlon = math.radians(pharmacy['longitude'] - float(user_lon))
+                        a = math.sin(dlat/2)**2 + math.cos(math.radians(float(user_lat))) * math.cos(math.radians(pharmacy['latitude'])) * math.sin(dlon/2)**2
+                        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+                        distance = 6371 * c
+                        pharmacy['distance'] = round(distance, 2)
+                    
+                    # Sort by distance
+                    pharmacy_list.sort(key=lambda x: x.get('distance', float('inf')))
+                else:
+                    # Sort by rating if no location
+                    pharmacy_list.sort(key=lambda x: x['rating'], reverse=True)
+                
+                # Save search to conversation
+                if conversation:
+                    search_result = f"Found {len(pharmacy_list)} pharmacies with {medicine_list[0]['name']}"
+                    conversation.add_message('bot', search_result)
+                    conversation.save()
+                
+                # Return medicine search results
+                return JsonResponse({
+                    "type": "medicine_search",
+                    "medicine_found": True,
+                    "medicines": medicine_list,
+                    "pharmacies": pharmacy_list[:15],  # Top 15 pharmacies
+                    "total_pharmacies": len(pharmacy_list),
+                    "has_location": bool(user_lat and user_lon),
+                    "session_id": session_id
+                })
+            
+            # No medicine found - provide helpful response
+            if is_medicine_query:
+                bot_reply = f"🔍 I couldn't find '<strong>{user_message}</strong>' in our medicine database.<br><br>💡 <strong>Suggestions:</strong><br>• Check the spelling<br>• Try the generic name (e.g., 'Acetaminophen' instead of brand names)<br>• Search for a similar medicine<br>• Use simpler terms<br><br>Or type '<strong>help</strong>' to see what I can do! 😊"
+            else:
+                bot_reply = "Thank you for your message! 😊<br><br>I'm currently designed to help with:<br>• 💊 Medicine searches<br>• 🏥 Finding pharmacies<br>• 📋 Prescription uploads<br>• ❓ General service questions<br><br>Unfortunately, I'm not able to answer that specific question right now. Please feel free to:<br>• Ask about our services (type 'services')<br>• Search for a medicine<br>• Contact our support team<br><br>Thank you for your understanding! 💚"
+            
+            if conversation:
+                conversation.add_message('bot', bot_reply)
+                conversation.save()
+            
+            return JsonResponse({
+                "type": "text",
+                "bot_reply": bot_reply,
+                "session_id": session_id
+            })
+            
+        except Exception as e:
+            print(f"Chatbot error: {str(e)}")
+            return JsonResponse({
+                "type": "text",
+                "bot_reply": "Sorry, I encountered an error. Please try again or rephrase your question."
+            })
 
     return JsonResponse({"error": "Invalid request"}, status=400)
 
@@ -266,15 +654,398 @@ def feedback_view(request):
 
 # Additional views for premium features
 @login_required(login_url='login')
+@login_required(login_url='login')
 def user_profile(request):
-    """User profile page"""
-    return render(request, 'accounts/user_profile.html')
+    """User profile page with edit functionality"""
+    user = request.user
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    
+    if request.method == 'POST':
+        # Update user information
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.save()
+        
+        # Update profile information
+        profile.phone = request.POST.get('phone', '')
+        profile.address = request.POST.get('address', '')
+        profile.save()
+        
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('user_profile')
+    
+    context = {
+        'user': user,
+        'profile': profile,
+    }
+    return render(request, 'accounts/user_profile.html', context)
 
 
 @login_required(login_url='login')
 def prescription_scanner(request):
     """Prescription upload page"""
     return render(request, 'accounts/PrescriptionScanner.html')
+
+
+@login_required(login_url='login')
+def process_prescription(request):
+    """
+    Process uploaded prescription using OCR text extraction
+    Extracts medicine names from image and finds nearby pharmacies with stock
+    Simple OCR-based approach without ML models
+    """
+    if request.method == 'POST':
+        try:
+            from math import radians, cos, sin, asin, sqrt
+            
+            # Get uploaded file
+            prescription_file = request.FILES.get('prescription_file')
+            
+            if not prescription_file:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No file uploaded'
+                }, status=400)
+            
+            # Validate file type
+            allowed_extensions = ['jpg', 'jpeg', 'png']
+            file_extension = prescription_file.name.split('.')[-1].lower()
+            
+            if file_extension not in allowed_extensions:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid file type. Allowed: {", ".join(allowed_extensions)}'
+                }, status=400)
+            
+            # Save uploaded file temporarily
+            fs = FileSystemStorage()
+            filename = fs.save(prescription_file.name, prescription_file)
+            file_path = fs.path(filename)
+            
+            print(f"🔍 Processing prescription file: {file_path}")
+            
+            # Extract text using OCR
+            from .ocr_utils import extract_text_from_prescription, match_medicines_in_text
+            
+            ocr_result = extract_text_from_prescription(file_path)
+            
+            # Delete temporary file
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            
+            if not ocr_result['success']:
+                return JsonResponse({
+                    'success': False,
+                    'error': ocr_result.get('error', 'OCR processing failed'),
+                    'extracted_text': ocr_result.get('text', '')
+                })
+            
+            extracted_text = ocr_result['text']
+            print(f"✅ Extracted text: {len(extracted_text)} characters")
+            
+            # Match medicines from database
+            medicine_matches = match_medicines_in_text(extracted_text)
+            
+            if not medicine_matches:
+                return JsonResponse({
+                    'success': True,
+                    'medicines_found': False,
+                    'extracted_text': extracted_text,
+                    'detected_medicines': [],
+                    'message': 'No medicines found in the prescription. Please ensure the image is clear and medicines are readable.'
+                })
+            
+            
+            # Get user location
+            latitude = request.POST.get('latitude')
+            longitude = request.POST.get('longitude')
+            
+            has_location = latitude and longitude
+            
+            if has_location:
+                try:
+                    latitude = float(latitude)
+                    longitude = float(longitude)
+                except (ValueError, TypeError):
+                    has_location = False
+            
+            # Prepare medicine data for response
+            medicines_found = []
+            medicine_ids = []
+            
+            for medicine in medicine_matches:
+                if medicine.id not in medicine_ids:
+                    medicine_ids.append(medicine.id)
+                    medicines_found.append({
+                        'id': medicine.id,
+                        'name': medicine.name,
+                        'generic_name': medicine.generic_name,
+                        'manufacturer': getattr(medicine, 'manufacturer', 'N/A'),
+                        'category': getattr(medicine, 'category', 'General')
+                    })
+            
+            # Find pharmacies with these medicines
+            inventory_items = Inventory.objects.filter(
+                medicine_id__in=medicine_ids,
+                quantity__gt=0
+            ).select_related('pharmacy', 'medicine')
+            
+            # Group by pharmacy
+            pharmacy_dict = {}
+            for item in inventory_items:
+                pharmacy_id = item.pharmacy.id
+                
+                if pharmacy_id not in pharmacy_dict:
+                    pharmacy_dict[pharmacy_id] = {
+                        'pharmacy': item.pharmacy,
+                        'medicines': [],
+                        'distance': None
+                    }
+                
+                pharmacy_dict[pharmacy_id]['medicines'].append({
+                    'name': item.medicine.name,
+                    'generic_name': item.medicine.generic_name,
+                    'price': float(item.price),
+                    'quantity': item.quantity
+                })
+            
+            # Calculate distances if location available
+            if has_location:
+                def haversine(lon1, lat1, lon2, lat2):
+                    """Calculate distance between two coordinates in km"""
+                    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+                    dlon = lon2 - lon1
+                    dlat = lat2 - lat1
+                    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+                    c = 2 * asin(sqrt(a))
+                    km = 6371 * c
+                    return round(km, 2)
+                
+                for pharmacy_id, data in pharmacy_dict.items():
+                    pharmacy = data['pharmacy']
+                    if pharmacy.latitude and pharmacy.longitude:
+                        distance = haversine(
+                            longitude, latitude,
+                            pharmacy.longitude, pharmacy.latitude
+                        )
+                        data['distance'] = distance
+            
+            # Sort pharmacies
+            pharmacy_list = list(pharmacy_dict.values())
+            
+            if has_location:
+                # Sort by distance (nearest first)
+                pharmacy_list.sort(key=lambda x: x['distance'] if x['distance'] is not None else float('inf'))
+            else:
+                # Sort by rating
+                pharmacy_list.sort(key=lambda x: x['pharmacy'].rating if x['pharmacy'].rating else 0, reverse=True)
+            
+            # Prepare response data
+            pharmacies_data = []
+            for data in pharmacy_list[:20]:  # Top 20 pharmacies
+                pharmacy = data['pharmacy']
+                pharmacies_data.append({
+                    'id': pharmacy.id,
+                    'name': pharmacy.name,
+                    'address': pharmacy.address,
+                    'phone': pharmacy.phone,
+                    'rating': float(pharmacy.rating) if pharmacy.rating else 0,
+                    'distance': data['distance'],
+                    'latitude': float(pharmacy.latitude) if pharmacy.latitude else None,
+                    'longitude': float(pharmacy.longitude) if pharmacy.longitude else None,
+                    'medicines': data['medicines']
+                })
+            
+            # Save prescription upload record
+            try:
+                medicine_names_str = ', '.join([m['name'] for m in medicines_found])
+                PrescriptionUpload.objects.create(
+                    user=request.user,
+                    prescription_image=prescription_file.name,
+                    extracted_text=extracted_text[:5000],  # Limit text length
+                    medicines_detected=medicine_names_str[:500]
+                )
+            except Exception as e:
+                print(f"Warning: Could not save prescription record: {str(e)}")
+            
+            return JsonResponse({
+                'success': True,
+                'medicines_found': True,
+                'extracted_text': extracted_text,
+                'detected_medicines': [m['name'] for m in medicines_found],
+                'medicines': medicines_found,
+                'pharmacies': pharmacies_data,
+                'total_pharmacies': len(pharmacies_data),
+                'has_location': has_location
+            })
+            
+        except Exception as e:
+            import traceback
+            print(f"❌ Prescription processing error: {str(e)}")
+            print(traceback.format_exc())
+            return JsonResponse({
+                'success': False,
+                'error': 'An error occurred while processing the prescription. Please try again.'
+            }, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def search_medicines_manual(request):
+    """
+    Search for medicines manually entered by user (no OCR required)
+    """
+    try:
+        import json
+        from math import radians, cos, sin, asin, sqrt
+        
+        # Parse JSON request body
+        data = json.loads(request.body)
+        medicine_names = data.get('medicines', [])
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        
+        if not medicine_names:
+            return JsonResponse({
+                'success': False,
+                'error': 'No medicine names provided'
+            }, status=400)
+        
+        print(f"Manual search for medicines: {medicine_names}")
+        
+        # Search for medicines in database
+        medicines_found = []
+        medicine_ids = []
+        
+        for medicine_name in medicine_names:
+            # Try exact match first
+            medicines = Medicine.objects.filter(name__iexact=medicine_name.strip())
+            
+            if not medicines.exists():
+                # Try partial match (contains)
+                medicines = Medicine.objects.filter(name__icontains=medicine_name.strip())
+            
+            if medicines.exists():
+                for med in medicines[:3]:  # Limit to top 3 matches per search
+                    if med.id not in medicine_ids:
+                        medicines_found.append(med)
+                        medicine_ids.append(med.id)
+        
+        if not medicines_found:
+            return JsonResponse({
+                'success': True,
+                'medicines_found': False,
+                'total_medicines': 0,
+                'total_pharmacies': 0,
+                'message': 'No medicines found with the given names. Please check spelling or try different names.'
+            })
+        
+        print(f"Found {len(medicines_found)} medicines in database")
+        
+        # Get pharmacies with these medicines in stock
+        inventory_items = Inventory.objects.filter(
+            medicine__in=medicines_found,
+            quantity__gt=0
+        ).select_related('pharmacy', 'medicine')
+        
+        if not inventory_items.exists():
+            return JsonResponse({
+                'success': True,
+                'medicines_found': True,
+                'detected_medicines': [med.name for med in medicines_found],
+                'total_medicines': len(medicines_found),
+                'total_pharmacies': 0,
+                'pharmacies': [],
+                'message': 'Medicines found but not available in any pharmacy currently.'
+            })
+        
+        # Group by pharmacy
+        pharmacy_dict = {}
+        for item in inventory_items:
+            pharmacy_id = item.pharmacy.id
+            if pharmacy_id not in pharmacy_dict:
+                pharmacy_dict[pharmacy_id] = {
+                    'pharmacy': item.pharmacy,
+                    'medicines': [],
+                    'distance': None
+                }
+            
+            pharmacy_dict[pharmacy_id]['medicines'].append({
+                'id': item.medicine.id,
+                'name': item.medicine.name,
+                'generic_name': item.medicine.generic_name or '',
+                'price': float(item.price),
+                'quantity': item.quantity
+            })
+        
+        # Calculate distances if location provided
+        has_location = latitude is not None and longitude is not None
+        
+        if has_location:
+            def haversine(lon1, lat1, lon2, lat2):
+                lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+                dlon = lon2 - lon1
+                dlat = lat2 - lat1
+                a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+                c = 2 * asin(sqrt(a))
+                km = 6371 * c
+                return round(km, 2)
+            
+            for pharmacy_id, data in pharmacy_dict.items():
+                pharmacy = data['pharmacy']
+                if pharmacy.latitude and pharmacy.longitude:
+                    distance = haversine(
+                        longitude, latitude,
+                        pharmacy.longitude, pharmacy.latitude
+                    )
+                    data['distance'] = distance
+        
+        # Sort pharmacies
+        pharmacy_list = list(pharmacy_dict.values())
+        
+        if has_location:
+            pharmacy_list.sort(key=lambda x: x['distance'] if x['distance'] is not None else float('inf'))
+        else:
+            pharmacy_list.sort(key=lambda x: x['pharmacy'].rating if x['pharmacy'].rating else 0, reverse=True)
+        
+        # Prepare response
+        pharmacies_data = []
+        for data in pharmacy_list[:20]:
+            pharmacy = data['pharmacy']
+            pharmacies_data.append({
+                'id': pharmacy.id,
+                'name': pharmacy.name,
+                'address': pharmacy.address,
+                'phone': pharmacy.phone,
+                'rating': float(pharmacy.rating) if pharmacy.rating else 0,
+                'distance': data['distance'],
+                'latitude': float(pharmacy.latitude) if pharmacy.latitude else None,
+                'longitude': float(pharmacy.longitude) if pharmacy.longitude else None,
+                'medicines': data['medicines']
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'medicines_found': True,
+            'detected_medicines': [med.name for med in medicines_found],
+            'total_medicines': len(medicines_found),
+            'total_pharmacies': len(pharmacies_data),
+            'pharmacies': pharmacies_data,
+            'has_location': has_location,
+            'extracted_text': f"Manually searched: {', '.join(medicine_names)}"
+        })
+    
+    except Exception as e:
+        print(f"Error in manual medicine search: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 @login_required(login_url='login')
@@ -647,26 +1418,40 @@ def search_by_city(request):
                     'available_medicines': available_medicines
                 })
             
-            # Sort results
-            if sort_by == 'rating':
-                results.sort(key=lambda x: (-x['rating'], x['name']))  # Highest rating first, then by name
-            elif sort_by == 'name':
-                results.sort(key=lambda x: x['name'])
-            elif sort_by == 'distance':
-                # User can pass lat/lon to calculate distance
-                lat = request.GET.get('lat')
-                lon = request.GET.get('lon')
-                if lat and lon:
-                    import math
-                    lat, lon = float(lat), float(lon)
-                    for pharm in results:
+            # Calculate distance for all pharmacies if lat/lon provided
+            lat = request.GET.get('lat')
+            lon = request.GET.get('lon')
+            has_location = False
+            if lat and lon:
+                import math
+                lat, lon = float(lat), float(lon)
+                has_location = True
+                for pharm in results:
+                    if pharm['latitude'] and pharm['longitude'] and pharm['latitude'] != 0 and pharm['longitude'] != 0:
                         dlat = math.radians(pharm['latitude'] - lat)
                         dlon = math.radians(pharm['longitude'] - lon)
                         a = math.sin(dlat/2)**2 + math.cos(math.radians(lat)) * math.cos(math.radians(pharm['latitude'])) * math.sin(dlon/2)**2
                         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
                         distance = 6371 * c  # km
                         pharm['distance'] = round(distance, 2)
-                    results.sort(key=lambda x: x.get('distance', float('inf')))
+                    else:
+                        pharm['distance'] = 999999  # Use a large number instead of Infinity for JSON compatibility
+            
+            # Sort results
+            if sort_by == 'rating':
+                # Highest rating first, then by distance if available, else by name
+                if has_location:
+                    results.sort(key=lambda x: (-x['rating'], x.get('distance', 999999)))
+                else:
+                    results.sort(key=lambda x: (-x['rating'], x['name']))
+            elif sort_by == 'name':
+                results.sort(key=lambda x: x['name'])
+            elif sort_by == 'distance':
+                if has_location:
+                    results.sort(key=lambda x: x.get('distance', 999999))
+                else:
+                    # Fallback to rating if no location provided
+                    results.sort(key=lambda x: -x['rating'])
             
             return JsonResponse({
                 'success': True,
@@ -1351,5 +2136,745 @@ def search_gps(request):
     }, status=405)
 
 
+# ============================================================================
+# PHARMACY OWNER PORTAL VIEWS
+# ============================================================================
+
+def pharmacy_owner_required(view_func):
+    """Decorator to ensure user is logged in and is a pharmacy owner"""
+    @login_required(login_url='pharmacy_login')
+    def wrapper(request, *args, **kwargs):
+        if request.user.profile.role != 'PHARMACY_OWNER':
+            messages.error(request, 'You need pharmacy owner access to view this page.')
+            return redirect('pharmacy_login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
+def pharmacy_register(request):
+    """Pharmacy owner registration"""
+    if request.method == 'POST':
+        form = PharmacyRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # City coordinates (same as in load_pharmacy_data.py)
+            city_coordinates = {
+                'Delhi': (28.6139, 77.2090),
+                'Mumbai': (19.0760, 72.8777),
+                'Bangalore': (12.9716, 77.5946),
+                'Hyderabad': (17.3850, 78.4867),
+                'Chennai': (13.0827, 80.2707),
+                'Kolkata': (22.5726, 88.3639),
+                'Pune': (18.5204, 73.8567),
+                'Ahmedabad': (23.0225, 72.5714),
+                'Jaipur': (26.9124, 75.7873),
+                'Lucknow': (26.8467, 80.9462),
+                'Chandigarh': (30.7333, 76.7794),
+                'Indore': (22.7196, 75.8577),
+                'Kochi': (9.9312, 76.2673),
+                'Surat': (21.1458, 72.1640),
+                'Visakhapatnam': (17.6869, 83.2185),
+                'Nagpur': (21.1458, 79.0882),
+                'Bhopal': (23.2599, 77.4126),
+                'Vadodara': (22.3072, 73.1812),
+                'Ghaziabad': (28.6692, 77.4538),
+                'Ludhiana': (30.9010, 75.8573),
+                'Pimpri-Chinchwad': (18.6298, 73.7997),
+                'Navi Mumbai': (19.0330, 73.0297),
+            }
+            
+            city = form.cleaned_data['city']
+            
+            # Get base coordinates for the city
+            if city in city_coordinates:
+                base_lat, base_lon = city_coordinates[city]
+            else:
+                # Try geocoding as fallback, but constrain to city center
+                from geopy.geocoders import Nominatim
+                geolocator = Nominatim(user_agent="medilocate")
+                try:
+                    location = geolocator.geocode(city)
+                    base_lat = location.latitude if location else 23.2599
+                    base_lon = location.longitude if location else 77.4126
+                except:
+                    base_lat, base_lon = 23.2599, 77.4126  # Default to Bhopal
+            
+            # Add random variation within ~4.5km radius (±0.040 degrees)
+            # Using slightly smaller range to ensure we stay under 5km
+            import random
+            latitude = base_lat + random.uniform(-0.040, 0.040)
+            longitude = base_lon + random.uniform(-0.040, 0.040)
+            
+            pharmacy = Pharmacy.objects.create(
+                name=form.cleaned_data['pharmacy_name'],
+                address=form.cleaned_data['pharmacy_address'],
+                city=city,
+                phone=form.cleaned_data['pharmacy_phone'],
+                latitude=latitude,
+                longitude=longitude,
+                owner=user,
+                verified=False
+            )
+            
+            messages.success(request, f'Registration successful! Welcome {user.username}. Your pharmacy is pending verification.')
+            
+            # Log the user in
+            login(request, user)
+            return redirect('pharmacy_dashboard')
+    else:
+        form = PharmacyRegistrationForm()
+    
+    return render(request, 'pharmacy/pharmacy_register.html', {'form': form})
+
+
+def pharmacy_login(request):
+    """Pharmacy owner login"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            if user.profile.role == 'PHARMACY_OWNER':
+                login(request, user)
+                messages.success(request, f'Welcome back, {user.username}!')
+                return redirect('pharmacy_dashboard')
+            else:
+                messages.error(request, 'Access denied. This portal is for pharmacy owners only.')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    
+    return render(request, 'pharmacy/pharmacy_login.html')
+
+
+def pharmacy_logout(request):
+    """Pharmacy owner logout"""
+    logout(request)
+    messages.success(request, 'Logged out successfully.')
+    return redirect('pharmacy_login')
+
+
+@pharmacy_owner_required
+def pharmacy_dashboard(request):
+    """Pharmacy dashboard home"""
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account. Please contact support.')
+        return redirect('home')
+    
+    # Get inventory stats
+    inventory = Inventory.objects.filter(pharmacy=pharmacy)
+    total_medicines = inventory.count()
+    in_stock = inventory.filter(quantity__gt=0).count()
+    low_stock = inventory.filter(quantity__gt=0, quantity__lte=20).count()
+    out_of_stock = inventory.filter(quantity=0).count()
+    
+    # Get low stock items
+    low_stock_items = inventory.filter(quantity__gt=0, quantity__lte=20).select_related('medicine')[:10]
+    
+    context = {
+        'pharmacy': pharmacy,
+        'total_medicines': total_medicines,
+        'in_stock': in_stock,
+        'low_stock': low_stock,
+        'out_of_stock': out_of_stock,
+        'low_stock_items': low_stock_items,
+        'now': timezone.now(),
+    }
+    
+    return render(request, 'pharmacy/pharmacy_dashboard.html', context)
+
+
+@pharmacy_owner_required
+def pharmacy_medicines(request):
+    """List all medicines in pharmacy inventory"""
+    from django.core.paginator import Paginator
+    
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    # Get search query
+    search_query = request.GET.get('search', '')
+    
+    medicines = Inventory.objects.filter(pharmacy=pharmacy).select_related('medicine')
+    
+    if search_query:
+        medicines = medicines.filter(
+            models.Q(medicine__name__icontains=search_query) |
+            models.Q(medicine__generic_name__icontains=search_query)
+        )
+    
+    medicines = medicines.order_by('-last_updated')
+    
+    # Pagination
+    paginator = Paginator(medicines, 20)
+    page_number = request.GET.get('page')
+    medicines_page = paginator.get_page(page_number)
+    
+    context = {
+        'pharmacy': pharmacy,
+        'medicines': medicines_page,
+        'search_query': search_query,
+    }
+    
+    return render(request, 'pharmacy/pharmacy_medicines.html', context)
+
+
+@pharmacy_owner_required
+def pharmacy_add_medicine(request):
+    """Add new medicine to inventory"""
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    if request.method == 'POST':
+        medicine_name = request.POST.get('medicine_name')
+        generic_name = request.POST.get('generic_name', '')
+        category = request.POST.get('category', '')
+        description = request.POST.get('description', '')
+        price = request.POST.get('price')
+        quantity = request.POST.get('quantity')
+        
+        # Check if medicine exists
+        medicine = Medicine.objects.filter(name__iexact=medicine_name).first()
+        
+        if not medicine:
+            # Create new medicine
+            medicine = Medicine.objects.create(
+                name=medicine_name,
+                generic_name=generic_name,
+                category=category,
+                description=description
+            )
+            messages.success(request, f'New medicine "{medicine_name}" added to MediLocate database!')
+        else:
+            # Update existing medicine if fields provided
+            if category and not medicine.category:
+                medicine.category = category
+            if description and not medicine.description:
+                medicine.description = description
+            medicine.save()
+        
+        # Check if already in inventory
+        inventory_item = Inventory.objects.filter(pharmacy=pharmacy, medicine=medicine).first()
+        
+        if inventory_item:
+            messages.warning(request, f'{medicine_name} is already in your inventory. Use Edit to update.')
+            return redirect('pharmacy_edit_medicine', inventory_item.id)
+        
+        # Add to inventory
+        Inventory.objects.create(
+            pharmacy=pharmacy,
+            medicine=medicine,
+            quantity=int(quantity),
+            price=float(price)
+        )
+        
+        messages.success(request, f'{medicine_name} added to your inventory successfully!')
+        return redirect('pharmacy_medicines')
+    
+    return render(request, 'pharmacy/pharmacy_add_medicine.html', {'pharmacy': pharmacy})
+
+
+@pharmacy_owner_required
+def pharmacy_bulk_upload(request):
+    """Bulk upload medicines from CSV/Excel file - Preview step"""
+    import pandas as pd
+    import json
+    
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    if request.method == 'POST' and request.FILES.get('medicine_file'):
+        file = request.FILES['medicine_file']
+        file_name = file.name.lower()
+        
+        # Validate file type
+        if not (file_name.endswith('.csv') or file_name.endswith('.xlsx')):
+            messages.error(request, 'Invalid file format. Please upload CSV or Excel (.xlsx) file only.')
+            return redirect('pharmacy_add_medicine')
+        
+        try:
+            # Read file based on type
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+            
+            # Validate columns (case-insensitive)
+            required_columns = ['medicine_name', 'price', 'quantity']
+            optional_columns = ['generic_name', 'category', 'description']
+            all_expected_columns = required_columns + optional_columns
+            
+            # Normalize column names
+            df.columns = df.columns.str.strip().str.lower()
+            
+            # Check required columns
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                messages.error(request, f'Missing required columns: {", ".join(missing_columns)}')
+                return redirect('pharmacy_add_medicine')
+            
+            # Validate unexpected columns
+            unexpected_columns = [col for col in df.columns if col not in all_expected_columns]
+            if unexpected_columns:
+                messages.warning(request, f'Warning: Unexpected columns will be ignored: {", ".join(unexpected_columns)}')
+            
+            # Check row limit
+            if len(df) > 500:
+                messages.error(request, f'Too many rows ({len(df)}). Maximum 500 medicines per upload.')
+                return redirect('pharmacy_add_medicine')
+            
+            if len(df) == 0:
+                messages.error(request, 'File is empty. Please add medicine data.')
+                return redirect('pharmacy_add_medicine')
+            
+            # Process and validate each row
+            valid_medicines = []
+            invalid_medicines = []
+            duplicate_medicines = []
+            
+            for index, row in df.iterrows():
+                row_num = index + 2  # +2 because pandas is 0-indexed and we have header row
+                errors = []
+                
+                try:
+                    # Validate required fields
+                    medicine_name = str(row.get('medicine_name', '')).strip()
+                    if not medicine_name or medicine_name.lower() in ['nan', 'none', '']:
+                        errors.append('Medicine name is required')
+                    
+                    # Validate price
+                    try:
+                        price = float(row.get('price', 0))
+                        if price < 0:
+                            errors.append('Price cannot be negative')
+                    except (ValueError, TypeError):
+                        errors.append('Invalid price format')
+                        price = 0
+                    
+                    # Validate quantity
+                    try:
+                        quantity = int(row.get('quantity', 0))
+                        if quantity < 0:
+                            errors.append('Quantity cannot be negative')
+                    except (ValueError, TypeError):
+                        errors.append('Invalid quantity (must be whole number)')
+                        quantity = 0
+                    
+                    # Optional fields
+                    generic_name = str(row.get('generic_name', '')).strip() if pd.notna(row.get('generic_name')) else ''
+                    category = str(row.get('category', '')).strip() if pd.notna(row.get('category')) else ''
+                    description = str(row.get('description', '')).strip() if pd.notna(row.get('description')) else ''
+                    
+                    if errors:
+                        invalid_medicines.append({
+                            'row': row_num,
+                            'medicine_name': medicine_name,
+                            'errors': errors
+                        })
+                    else:
+                        # Check if already in inventory
+                        medicine_obj = Medicine.objects.filter(name__iexact=medicine_name).first()
+                        if medicine_obj:
+                            inventory_exists = Inventory.objects.filter(pharmacy=pharmacy, medicine=medicine_obj).exists()
+                            if inventory_exists:
+                                duplicate_medicines.append({
+                                    'row': row_num,
+                                    'medicine_name': medicine_name,
+                                    'status': 'Already in inventory'
+                                })
+                                continue
+                        
+                        valid_medicines.append({
+                            'row': row_num,
+                            'medicine_name': medicine_name,
+                            'generic_name': generic_name,
+                            'category': category,
+                            'price': price,
+                            'quantity': quantity,
+                            'description': description
+                        })
+                
+                except Exception as e:
+                    invalid_medicines.append({
+                        'row': row_num,
+                        'medicine_name': medicine_name if 'medicine_name' in locals() else 'Unknown',
+                        'errors': [str(e)]
+                    })
+            
+            # Store validated data in session
+            request.session['bulk_upload_data'] = {
+                'valid_medicines': valid_medicines,
+                'invalid_medicines': invalid_medicines,
+                'duplicate_medicines': duplicate_medicines
+            }
+            
+            # Redirect to preview page
+            return render(request, 'pharmacy/pharmacy_bulk_preview.html', {
+                'pharmacy': pharmacy,
+                'valid_medicines': valid_medicines,
+                'invalid_medicines': invalid_medicines,
+                'duplicate_medicines': duplicate_medicines,
+                'total_valid': len(valid_medicines),
+                'total_invalid': len(invalid_medicines),
+                'total_duplicate': len(duplicate_medicines),
+            })
+            
+        except Exception as e:
+            messages.error(request, f'Error processing file: {str(e)}')
+            return redirect('pharmacy_add_medicine')
+    
+    messages.error(request, 'No file uploaded.')
+    return redirect('pharmacy_add_medicine')
+
+
+@pharmacy_owner_required
+def pharmacy_bulk_upload_confirm(request):
+    """Confirm and save bulk upload to database"""
+    from decimal import Decimal
+    
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    # Get data from session
+    bulk_data = request.session.get('bulk_upload_data')
+    
+    if not bulk_data or request.method != 'POST':
+        messages.error(request, 'No upload data found. Please upload the file again.')
+        return redirect('pharmacy_add_medicine')
+    
+    valid_medicines = bulk_data.get('valid_medicines', [])
+    
+    if not valid_medicines:
+        messages.warning(request, 'No valid medicines to upload.')
+        return redirect('pharmacy_add_medicine')
+    
+    # Process and save medicines
+    success_count = 0
+    error_count = 0
+    errors = []
+    
+    for med_data in valid_medicines:
+        try:
+            medicine_name = med_data['medicine_name']
+            generic_name = med_data.get('generic_name', '')
+            category = med_data.get('category', '')
+            description = med_data.get('description', '')
+            price = med_data['price']
+            quantity = med_data['quantity']
+            
+            # Check if medicine exists in Medicine table
+            medicine = Medicine.objects.filter(name__iexact=medicine_name).first()
+            
+            if not medicine:
+                # Create new medicine
+                medicine = Medicine.objects.create(
+                    name=medicine_name,
+                    generic_name=generic_name,
+                    category=category,
+                    description=description
+                )
+            else:
+                # Update medicine if new info provided
+                if generic_name and not medicine.generic_name:
+                    medicine.generic_name = generic_name
+                if category and not medicine.category:
+                    medicine.category = category
+                if description and not medicine.description:
+                    medicine.description = description
+                medicine.save()
+            
+            # Create inventory item
+            Inventory.objects.create(
+                pharmacy=pharmacy,
+                medicine=medicine,
+                quantity=quantity,
+                price=Decimal(str(price))
+            )
+            
+            success_count += 1
+            
+        except Exception as e:
+            errors.append(f'{medicine_name}: {str(e)}')
+            error_count += 1
+    
+    # Clear session data
+    request.session.pop('bulk_upload_data', None)
+    
+    # Summary message
+    if success_count > 0:
+        messages.success(request, f'✓ Successfully added {success_count} medicines to your inventory!')
+    
+    if error_count > 0:
+        messages.error(request, f'✗ Failed to add {error_count} medicines')
+        for error in errors[:3]:
+            messages.error(request, error)
+    
+    return redirect('pharmacy_medicines')
+
+
+@pharmacy_owner_required
+def pharmacy_download_template(request):
+    """Download sample CSV template for bulk upload"""
+    import csv
+    from django.http import HttpResponse
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="medicine_upload_template.csv"'
+    
+    writer = csv.writer(response)
+    # Write header
+    writer.writerow(['medicine_name', 'generic_name', 'category', 'price', 'quantity', 'description'])
+    # Write sample rows
+    writer.writerow(['Paracetamol 500mg', 'Acetaminophen', 'Pain Relief', '50.00', '100', 'For fever and pain relief'])
+    writer.writerow(['Amoxicillin 250mg', 'Amoxicillin', 'Antibiotics', '120.50', '50', 'Antibiotic for bacterial infections'])
+    writer.writerow(['Vitamin C 500mg', 'Ascorbic Acid', 'Vitamins', '35.00', '200', 'Boosts immune system'])
+    
+    return response
+
+
+@pharmacy_owner_required
+def pharmacy_edit_medicine(request, inventory_id):
+    """Edit medicine in inventory"""
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    inventory = get_object_or_404(Inventory, id=inventory_id, pharmacy=pharmacy)
+    
+    if request.method == 'POST':
+        category = request.POST.get('category', '')
+        description = request.POST.get('description', '')
+        price = request.POST.get('price')
+        quantity = request.POST.get('quantity')
+        
+        # Update medicine details
+        if category:
+            inventory.medicine.category = category
+        if description:
+            inventory.medicine.description = description
+        inventory.medicine.save()
+        
+        # Update inventory
+        inventory.price = float(price)
+        inventory.quantity = int(quantity)
+        inventory.save()
+        
+        messages.success(request, f'{inventory.medicine.name} updated successfully!')
+        return redirect('pharmacy_medicines')
+    
+    context = {
+        'pharmacy': pharmacy,
+        'inventory': inventory,
+    }
+    
+    return render(request, 'pharmacy/pharmacy_edit_medicine.html', context)
+
+
+@pharmacy_owner_required
+def pharmacy_delete_medicine(request, inventory_id):
+    """Delete medicine from inventory"""
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    inventory = get_object_or_404(Inventory, id=inventory_id, pharmacy=pharmacy)
+    
+    if request.method == 'POST':
+        medicine_name = inventory.medicine.name
+        inventory.delete()
+        messages.success(request, f'{medicine_name} removed from your inventory.')
+        return redirect('pharmacy_medicines')
+    
+    context = {
+        'pharmacy': pharmacy,
+        'inventory': inventory,
+    }
+    
+    return render(request, 'pharmacy/pharmacy_delete_medicine.html', context)
+
+
+@pharmacy_owner_required
+def pharmacy_settings(request):
+    """Pharmacy settings and profile management"""
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type', 'pharmacy')
+        
+        if form_type == 'pharmacy':
+            # Update pharmacy info
+            pharmacy.name = request.POST.get('pharmacy_name')
+            pharmacy.address = request.POST.get('address')
+            pharmacy.city = request.POST.get('city')
+            pharmacy.phone = request.POST.get('phone')
+            pharmacy.save()
+            messages.success(request, 'Pharmacy information updated successfully!')
+        
+        elif form_type == 'account':
+            # Update user account
+            request.user.first_name = request.POST.get('first_name', '')
+            request.user.last_name = request.POST.get('last_name', '')
+            request.user.email = request.POST.get('email', '')
+            request.user.save()
+            
+            phone_number = request.POST.get('phone_number', '')
+            if phone_number:
+                request.user.profile.phone_number = phone_number
+                request.user.profile.save()
+            
+            messages.success(request, 'Account settings updated successfully!')
+        
+        elif form_type == 'password':
+            # Change password
+            from django.contrib.auth import update_session_auth_hash
+            current_password = request.POST.get('current_password')
+            new_password1 = request.POST.get('new_password1')
+            new_password2 = request.POST.get('new_password2')
+            
+            if not request.user.check_password(current_password):
+                messages.error(request, 'Current password is incorrect.')
+            elif new_password1 != new_password2:
+                messages.error(request, 'New passwords do not match.')
+            else:
+                request.user.set_password(new_password1)
+                request.user.save()
+                update_session_auth_hash(request, request.user)
+                messages.success(request, 'Password changed successfully!')
+        
+        return redirect('pharmacy_settings')
+    
+    context = {
+        'pharmacy': pharmacy,
+    }
+    
+    return render(request, 'pharmacy/pharmacy_settings.html', context)
+
+
+@pharmacy_owner_required
+def pharmacy_orders(request):
+    """View orders and prescription uploads"""
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    # Get search logs for this pharmacy
+    from datetime import timedelta
+    from django.utils import timezone
+    from django.db.models import Count
+    
+    # Get medicines in this pharmacy
+    pharmacy_medicines = Inventory.objects.filter(pharmacy=pharmacy).values_list('medicine_id', flat=True)
+    
+    # Get base queryset for search logs (without slicing)
+    search_logs_base = SearchLog.objects.filter(
+        search_timestamp__gte=timezone.now() - timedelta(days=30)
+    )
+    
+    # Calculate stats BEFORE slicing
+    total_searches = search_logs_base.count()
+    recent_searches = SearchLog.objects.filter(
+        search_timestamp__gte=timezone.now() - timedelta(days=7)
+    ).count()
+    unique_users = search_logs_base.values('user').distinct().count()
+    
+    # NOW slice for display (after distinct calculations)
+    search_logs = search_logs_base.order_by('-search_timestamp')[:50]
+    
+    # Get prescription uploads (recent ones)
+    prescriptions = PrescriptionUpload.objects.filter(
+        created_at__gte=timezone.now() - timedelta(days=30)
+    ).order_by('-created_at')[:50]
+    
+    context = {
+        'pharmacy': pharmacy,
+        'search_logs': search_logs,
+        'prescriptions': prescriptions,
+        'total_searches': total_searches,
+        'recent_searches': recent_searches,
+        'unique_users': unique_users,
+    }
+    
+    return render(request, 'pharmacy/pharmacy_orders.html', context)
+
+
+@pharmacy_owner_required
+def pharmacy_analytics(request):
+    """Analytics and reports"""
+    pharmacy = Pharmacy.objects.filter(owner=request.user).first()
+    
+    if not pharmacy:
+        messages.error(request, 'No pharmacy found for your account.')
+        return redirect('pharmacy_dashboard')
+    
+    from django.db.models import Sum, Count
+    from datetime import timedelta
+    from django.utils import timezone
+    
+    # Inventory stats
+    inventory = Inventory.objects.filter(pharmacy=pharmacy)
+    total_medicines = inventory.count()
+    in_stock = inventory.filter(quantity__gt=0).count()
+    low_stock = inventory.filter(quantity__gt=0, quantity__lte=20).count()
+    out_of_stock = inventory.filter(quantity=0).count()
+    
+    # Calculate total inventory value
+    total_inventory_value = inventory.aggregate(
+        total=Sum(models.F('price') * models.F('quantity'))
+    )['total'] or 0
+    
+    # Search stats
+    search_logs = SearchLog.objects.filter(
+        search_timestamp__gte=timezone.now() - timedelta(days=30)
+    )
+    total_searches = search_logs.count()
+    unique_users = search_logs.values('user').distinct().count()
+    
+    # Low stock items
+    low_stock_items = inventory.filter(quantity__gt=0, quantity__lte=20).select_related('medicine')
+    
+    # Top searched medicines (placeholder - would need proper implementation)
+    top_medicines = []
+    
+    context = {
+        'pharmacy': pharmacy,
+        'total_medicines': total_medicines,
+        'in_stock': in_stock,
+        'low_stock': low_stock,
+        'out_of_stock': out_of_stock,
+        'total_inventory_value': round(total_inventory_value, 2),
+        'total_searches': total_searches,
+        'unique_users': unique_users,
+        'low_stock_items': low_stock_items,
+        'top_medicines': top_medicines,
+    }
+    
+    return render(request, 'pharmacy/pharmacy_analytics.html', context)

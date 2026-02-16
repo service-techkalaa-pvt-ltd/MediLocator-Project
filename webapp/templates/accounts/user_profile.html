@@ -1,10 +1,20 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
 
-{% block title %}My Profile - MediLocator{% endblock %}
+{% block title %}My Profile - MediLocate{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 1000px; margin-top: 2rem;">
+<div class="container" style="max-width: 1000px; margin-top: 2rem; margin-bottom: 3rem;">
+    {% if messages %}
+    <div style="margin-bottom: 1rem;">
+        {% for message in messages %}
+        <div style="padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; background: {% if message.tags == 'success' %}#d1fae5{% elif message.tags == 'error' %}#fee2e2{% else %}#dbeafe{% endif %}; color: {% if message.tags == 'success' %}#065f46{% elif message.tags == 'error' %}#991b1b{% else %}#1e40af{% endif %}; border-left: 4px solid {% if message.tags == 'success' %}#10b981{% elif message.tags == 'error' %}#ef4444{% else %}#3b82f6{% endif %};">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="profile-header" style="background: linear-gradient(135deg, #1E40AF 0%, #7C3AED 50%, #06B6D4 100%); color: white; padding: 2rem; border-radius: 15px; margin-bottom: 2rem; text-align: center;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
             <div style="width: 100px; height: 100px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #1E40AF; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
@@ -17,21 +27,24 @@
         </div>
     </div>
 
-    <div class="profile-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <!-- View/Edit Toggle Buttons -->
+    <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;">
+        <button onclick="showView()" id="viewBtn" class="toggle-btn active" style="padding: 0.75rem 2rem; border: 2px solid #7C3AED; background: linear-gradient(135deg, #7C3AED, #06B6D4); color: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+            <i class="fas fa-eye"></i> View Profile
+        </button>
+        <button onclick="showEdit()" id="editBtn" class="toggle-btn" style="padding: 0.75rem 2rem; border: 2px solid #7C3AED; background: white; color: #7C3AED; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+            <i class="fas fa-edit"></i> Edit Profile
+        </button>
+    </div>
+
+    <!-- View Mode -->
+    <div id="viewMode" class="profile-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
         <!-- Personal Information -->
         <div class="card" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1);">
             <h2 style="color: #1E40AF; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-user"></i> Personal Information
             </h2>
             <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <div>
-                    <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Username</label>
-                    <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.username }}</p>
-                </div>
-                <div>
-                    <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Email</label>
-                    <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.email }}</p>
-                </div>
                 <div>
                     <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">First Name</label>
                     <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.first_name|default:"Not set" }}</p>
@@ -41,8 +54,16 @@
                     <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.last_name|default:"Not set" }}</p>
                 </div>
                 <div>
-                    <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Member Since</label>
-                    <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.date_joined|date:"F d, Y" }}</p>
+                    <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Email</label>
+                    <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.email }}</p>
+                </div>
+                <div>
+                    <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Phone</label>
+                    <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ profile.phone|default:"Not set" }}</p>
+                </div>
+                <div>
+                    <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Address</label>
+                    <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ profile.address|default:"Not set" }}</p>
                 </div>
             </div>
         </div>
@@ -50,15 +71,19 @@
         <!-- Account Settings -->
         <div class="card" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1);">
             <h2 style="color: #1E40AF; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-cog"></i> Account Settings
+                <i class="fas fa-cog"></i> Account Information
             </h2>
             <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div>
+                    <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Username</label>
+                    <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.username }}</p>
+                </div>
                 {% if user.profile %}
                 <div>
                     <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Role</label>
                     <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">
                         <span style="background: linear-gradient(135deg, #06B6D4, #7C3AED); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
-                            {{ user.profile.role|default:"User" }}
+                            {{ user.profile.role|default:"PATIENT" }}
                         </span>
                     </p>
                 </div>
@@ -78,55 +103,109 @@
                     </p>
                 </div>
                 <div>
+                    <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Member Since</label>
+                    <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.date_joined|date:"F d, Y" }}</p>
+                </div>
+                <div>
                     <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Last Login</label>
                     <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.last_login|date:"F d, Y H:i"|default:"Never" }}</p>
                 </div>
             </div>
 
-            <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                <a href="{% url 'home' %}" style="display: block; text-align: center; background: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s;">
-                    <i class="fas fa-edit"></i> Edit Profile
-                </a>
+            <div style="margin-top: 2rem;">
                 <a href="{% url 'home' %}" style="display: block; text-align: center; background: white; color: #1E40AF; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: 2px solid #1E40AF; transition: all 0.3s;">
-                    <i class="fas fa-key"></i> Change Password
+                    <i class="fas fa-home"></i> Back to Home
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Activity Stats -->
-    <div class="stats-section" style="margin-top: 2rem;">
-        <h2 style="color: #1E40AF; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fas fa-chart-line"></i> Your Activity
-        </h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-            <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #06B6D4;">
-                <div style="font-size: 2rem; color: #06B6D4; margin-bottom: 0.5rem;">
-                    <i class="fas fa-search"></i>
-                </div>
-                <h3 style="margin: 0; font-size: 1.5rem; color: #1E293B;">0</h3>
-                <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 0.875rem;">Searches Made</p>
+    <!-- Edit Mode -->
+    <div id="editMode" style="display: none;">
+        <div class="profile-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <!-- Edit Profile Form -->
+            <div class="card" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1);">
+                <h2 style="color: #1E40AF; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </h2>
+                <form method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                    {% csrf_token %}
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">First Name</label>
+                        <input type="text" name="first_name" value="{{ user.first_name }}" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">Last Name</label>
+                        <input type="text" name="last_name" value="{{ user.last_name }}" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">Email</label>
+                        <input type="email" name="email" value="{{ user.email }}" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">Phone</label>
+                        <input type="text" name="phone" value="{{ profile.phone|default:'' }}" placeholder="Enter phone number" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">Address</label>
+                        <textarea name="address" rows="3" placeholder="Enter your address" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;">{{ profile.address|default:'' }}</textarea>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" style="flex: 1; background: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%); color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button type="button" onclick="showView()" style="flex: 1; background: #718096; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
             </div>
-            <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #7C3AED;">
-                <div style="font-size: 2rem; color: #7C3AED; margin-bottom: 0.5rem;">
-                    <i class="fas fa-file-prescription"></i>
+
+            <!-- Account Info (Read-only in Edit Mode) -->
+            <div class="card" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1);">
+                <h2 style="color: #1E40AF; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-info-circle"></i> Account Information
+                </h2>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Username</label>
+                        <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.username }}</p>
+                    </div>
+                    {% if user.profile %}
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Role</label>
+                        <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">
+                            <span style="background: linear-gradient(135deg, #06B6D4, #7C3AED); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+                                {{ user.profile.role|default:"PATIENT" }}
+                            </span>
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Account Status</label>
+                        <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">
+                            {% if user.is_active %}
+                            <span style="color: #10b981; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-check-circle"></i> Active
+                            </span>
+                            {% else %}
+                            <span style="color: #ef4444; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-times-circle"></i> Inactive
+                            </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <label style="display: block; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem;">Member Since</label>
+                        <p style="margin: 0; font-size: 1rem; color: #1E293B; font-weight: 500;">{{ user.date_joined|date:"F d, Y" }}</p>
+                    </div>
                 </div>
-                <h3 style="margin: 0; font-size: 1.5rem; color: #1E293B;">0</h3>
-                <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 0.875rem;">Prescriptions Uploaded</p>
-            </div>
-            <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #10b981;">
-                <div style="font-size: 2rem; color: #10b981; margin-bottom: 0.5rem;">
-                    <i class="fas fa-star"></i>
+                
+                <div style="margin-top: 2rem; padding: 1rem; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 8px;">
+                    <p style="margin: 0; font-size: 0.875rem; color: #1e40af;">
+                        <i class="fas fa-info-circle"></i> Username and Role cannot be changed here. Contact admin for assistance.
+                    </p>
                 </div>
-                <h3 style="margin: 0; font-size: 1.5rem; color: #1E293B;">0</h3>
-                <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 0.875rem;">Saved Pharmacies</p>
-            </div>
-            <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #f59e0b;">
-                <div style="font-size: 2rem; color: #f59e0b; margin-bottom: 0.5rem;">
-                    <i class="fas fa-comments"></i>
-                </div>
-                <h3 style="margin: 0; font-size: 1.5rem; color: #1E293B;">0</h3>
-                <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 0.875rem;">Chatbot Conversations</p>
             </div>
         </div>
     </div>
@@ -139,10 +218,49 @@
         }
     }
     
-    .card:hover, .stat-card:hover {
+    .card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
         transition: all 0.3s;
     }
+    
+    input:focus, textarea:focus {
+        outline: none;
+        border-color: #7C3AED !important;
+    }
+    
+    button:hover, .toggle-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+    }
+    
+    .toggle-btn.active {
+        background: linear-gradient(135deg, #7C3AED, #06B6D4) !important;
+        color: white !important;
+    }
 </style>
+
+<script>
+    function showView() {
+        document.getElementById('viewMode').style.display = 'grid';
+        document.getElementById('editMode').style.display = 'none';
+        document.getElementById('viewBtn').classList.add('active');
+        document.getElementById('editBtn').classList.remove('active');
+        document.getElementById('viewBtn').style.background = 'linear-gradient(135deg, #7C3AED, #06B6D4)';
+        document.getElementById('viewBtn').style.color = 'white';
+        document.getElementById('editBtn').style.background = 'white';
+        document.getElementById('editBtn').style.color = '#7C3AED';
+    }
+    
+    function showEdit() {
+        document.getElementById('viewMode').style.display = 'none';
+        document.getElementById('editMode').style.display = 'block';
+        document.getElementById('viewBtn').classList.remove('active');
+        document.getElementById('editBtn').classList.add('active');
+        document.getElementById('viewBtn').style.background = 'white';
+        document.getElementById('viewBtn').style.color = '#7C3AED';
+        document.getElementById('editBtn').style.background = 'linear-gradient(135deg, #7C3AED, #06B6D4)';
+        document.getElementById('editBtn').style.color = 'white';
+    }
+</script>
 {% endblock %}

@@ -129,24 +129,114 @@ def load_pharmacies():
 
 
 def generate_dummy_pharmacies():
-    """Generate 150+ dummy pharmacies across all major Indian cities"""
+    """Generate 150+ dummy pharmacies across all major Indian cities with realistic names"""
     
-    pharmacy_prefixes = [
-        'Health', 'Care', 'Med', 'City', 'Express', 'Quick', 'Star', 'Prime',
-        'Elite', 'Sunrise', 'Best', 'Universal', 'Noble', 'Divine', 'Life',
-        'Smart', 'Safe', 'Total', 'Pure', 'Gold', 'Silver', 'Bright', 'Hope',
-        'Unity', 'Trust', 'Apex', 'Crown', 'Royal', 'Gem', 'Pearl', 'Comfort',
-        'Wellness', 'Healing', 'Vitality', 'Remedy', 'Guardian', 'Shield',
-        'Haven', 'Peak', 'Victory', 'Modern', 'Quick', 'Easy', 'Super',
-    ]
-
-    pharmacy_suffixes = [
-        'Pharmacy', 'Medicals', 'Medical', 'Health', 'Chemist', 'Medical Store',
-        'Care Center', 'Health Plus', 'Clinic', 'Wellness Center', 'Drug Store',
-    ]
+    # Realistic medical store names for different cities
+    realistic_names = {
+        'Delhi': [
+            'Karol Bagh Medicals', 'Rajendra Medical Store', 'Connaught Pharmacy',
+            'Paharganj Drug House', 'Defence Colony Chemist', 'Saket Healthcare',
+            'Dwarka Medical Centre', 'Rohini Medical Mart', 
+        ],
+        'Mumbai': [
+            'Dadar Medical Store', 'Andheri Pharmacy Hub', 'Bandra Medical Plaza',
+            'Colaba Drug Store', 'Kurla Healthcare Centre', 'Thane Medical Corner',
+            'Borivali Wellness Store', 'Mulund Medicals',
+        ],
+        'Bangalore': [
+            'Koramangala Medicals', 'Indiranagar Pharmacy', 'Whitefield Drug Store',
+            'Jayanagar Medical Centre', 'BTM Medical Plaza', 'Electronic City Pharmacy',
+            'HSR Healthcare', 'Marathahalli Medicals',
+        ],
+        'Hyderabad': [
+            'Banjara Hills Pharmacy', 'Madhapur Medical Store', 'Gachibowli Healthcare',
+            'Kukatpally Drug House', 'Secunderabad Medicals', 'Hitech City Pharmacy',
+            'Dilsukhnagar Medical Plaza', 'Ameerpet Healthcare Centre',
+        ],
+        'Chennai': [
+            'T Nagar Medical Store', 'Anna Nagar Pharmacy', 'Velachery Drug House',
+            'Adyar Healthcare Centre', 'Tambaram Medicals', 'Porur Medical Plaza',
+            'Mylapore Wellness Store', 'OMR Healthcare',
+        ],
+        'Kolkata': [
+            'Park Street Pharmacy', 'Salt Lake Medical Store', 'Howrah Drug House',
+            'Ballygunge Healthcare', 'Jadavpur Medicals', 'New Town Medical Plaza',
+            'Esplanade Wellness Store', 'Gariahat Healthcare Centre',
+        ],
+        'Pune': [
+            'Deccan Gymkhana Medicals', 'Kothrud Pharmacy Hub', 'Aundh Medical Store',
+            'Camp Drug House', 'Kalyani Nagar Healthcare', 'Baner Medical Plaza',
+            'Wakad Wellness Centre', 'Pimpri Medical Mart',
+        ],
+        'Ahmedabad': [
+            'Vastrapur Medical Store', 'Navrangpura Pharmacy', 'Satellite Drug House',
+            'Maninagar Healthcare', 'CG Road Medicals', 'SG Highway Medical Plaza',
+            'Bopal Wellness Store', 'Thaltej Healthcare Centre',
+        ],
+        'Jaipur': [
+            'MI Road Medical Store', 'Malviya Nagar Pharmacy', 'Vaishali Nagar Drug House',
+            'C Scheme Healthcare', 'Jagatpura Medicals', 'Mansarovar Medical Plaza',
+            'Jhotwara Wellness Store', 'Ajmer Road Healthcare',
+        ],
+        'Lucknow': [
+            'Hazratganj Medical Store', 'Gomti Nagar Pharmacy', 'Alambagh Drug House',
+            'Indira Nagar Healthcare', 'Aliganj Medicals', 'Nirala Nagar Medical Plaza',
+            'Chowk Wellness Store', 'Mahanagar Healthcare Centre',
+        ],
+        'Chandigarh': [
+            'Sector 17 Medical Store', 'Sector 22 Pharmacy', 'Sector 35 Drug House',
+            'Elante Healthcare', 'Sector 43 Medicals', 'Panchkula Medical Plaza',
+            'Mohali Wellness Store', 'Industrial Area Healthcare',
+        ],
+        'Indore': [
+            'Vijay Nagar Medical Store', 'MG Road Pharmacy', 'Palasia Drug House',
+            'Scheme No 54 Healthcare', 'Bhawarkuan Medicals', 'AB Road Medical Plaza',
+            'Rau Wellness Store', 'Nipania Healthcare Centre',
+        ],
+        'Kochi': [
+            'MG Road Medical Store', 'Palarivattom Pharmacy', 'Kakkanad Drug House',
+            'Edappally Healthcare', 'Kaloor Medicals', 'Vytilla Medical Plaza',
+            'Tripunithura Wellness Store', 'Fort Kochi Healthcare',
+        ],
+        'Surat': [
+            'Adajan Medical Store', 'Vesu Pharmacy', 'Athwa Lines Drug House',
+            'Piplod Healthcare', 'Parle Point Medicals', 'City Light Medical Plaza',
+            'Varachha Wellness Store', 'Rander Road Healthcare',
+        ],
+        'Visakhapatnam': [
+            'Dwaraka Nagar Medical Store', 'Siripuram Pharmacy', 'MVP Colony Drug House',
+            'Gajuwaka Healthcare', 'Madhurawada Medicals', 'NAD Medical Plaza',
+            'Beach Road Wellness Store', 'RTC Complex Healthcare',
+        ],
+        'Nagpur': [
+            'Sitabuldi Medical Store', 'Dharampeth Pharmacy', 'Sadar Drug House',
+            'Civil Lines Healthcare', 'Pratap Nagar Medicals', 'Wardhaman Nagar Medical Plaza',
+            'Trimurti Nagar Wellness Store', 'Manish Nagar Healthcare',
+        ],
+        'Bhopal': [
+            'MP Nagar Medical Store', 'Arera Colony Pharmacy', 'New Market Drug House',
+            'TT Nagar Healthcare', 'Kolar Road Medicals', 'Bawadiya Kalan Medical Plaza',
+            'Shahpura Lake View Pharmacy', 'Hoshangabad Road Healthcare',
+        ],
+        'Vadodara': [
+            'Alkapuri Medical Store', 'Sayajigunj Pharmacy', 'Manjalpur Drug House',
+            'Race Course Healthcare', 'Akota Medicals', 'Gotri Road Medical Plaza',
+            'Vasna Wellness Store', 'Fatehgunj Healthcare Centre',
+        ],
+        'Ghaziabad': [
+            'Vaishali Medical Store', 'Indirapuram Pharmacy', 'Raj Nagar Drug House',
+            'Kaushambi Healthcare', 'Crossings Republik Medicals', 'Vasundhara Medical Plaza',
+            'Mohan Nagar Wellness Store', 'Link Road Healthcare',
+        ],
+        'Ludhiana': [
+            'Model Town Medical Store', 'Ghumar Mandi Pharmacy', 'Sarabha Nagar Drug House',
+            'Ferozepur Road Healthcare', 'Civil Lines Medicals', 'PAU Medical Plaza',
+            'Dugri Wellness Store', 'BRS Nagar Healthcare',
+        ],
+    }
 
     cities = [
-        ('Delhi', 28.7041, 77.1025),
+        ('Delhi', 28.6139, 77.2090),
         ('Mumbai', 19.0760, 72.8777),
         ('Bangalore', 12.9716, 77.5946),
         ('Hyderabad', 17.3850, 78.4867),
@@ -162,7 +252,7 @@ def generate_dummy_pharmacies():
         ('Surat', 21.1458, 72.1640),
         ('Visakhapatnam', 17.6869, 83.2185),
         ('Nagpur', 21.1458, 79.0882),
-        ('Bhopal', 23.1815, 79.9864),
+        ('Bhopal', 23.2599, 77.4126),
         ('Vadodara', 22.3072, 73.1812),
         ('Ghaziabad', 28.6692, 77.4538),
         ('Ludhiana', 30.9010, 75.8573),
@@ -171,15 +261,16 @@ def generate_dummy_pharmacies():
     dummy_list = []
     
     for city, base_lat, base_lon in cities:
-        # 8 pharmacies per city
+        # 8 pharmacies per city using realistic names
+        city_names = realistic_names.get(city, [])
         for i in range(8):
-            prefix = random.choice(pharmacy_prefixes)
-            suffix = random.choice(pharmacy_suffixes)
-            name = f"{prefix} {suffix} - {city} {i+1}"
+            # Use realistic name from the predefined list
+            name = city_names[i] if i < len(city_names) else f"{city} Medical Store {i+1}"
             
-            # Add slight variation to coordinates
-            lat = base_lat + random.uniform(-0.05, 0.05)
-            lon = base_lon + random.uniform(-0.05, 0.05)
+            # Add slight variation to coordinates (within ~5km radius)
+            # 1 degree ≈ 111 km, so 0.045 degrees ≈ 5 km
+            lat = base_lat + random.uniform(-0.045, 0.045)
+            lon = base_lon + random.uniform(-0.045, 0.045)
             
             rating = round(random.uniform(3.0, 5.0), 1)
             

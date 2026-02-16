@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Detection & Recognition System</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:#0f172a;color:#e5e7eb}
+header{background:#020617;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+header h1{margin:0;font-size:20px;color:#38bdf8}
+nav button{background:transparent;border:1px solid #334155;color:#e5e7eb;margin-left:8px;padding:8px 12px;cursor:pointer;border-radius:6px}
+nav button.active,nav button:hover{background:#38bdf8;color:#020617}
+main{padding:24px}
+.page{display:none;animation:fade .3s ease}
+.page.active{display:block}
+.card{background:#020617;border:1px solid #1e293b;border-radius:10px;padding:20px;margin-bottom:20px}
+h2{color:#38bdf8;margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+input,button,select{padding:10px;border-radius:6px;border:1px solid #334155;background:#020617;color:#e5e7eb}
+button.primary{background:#38bdf8;color:#020617;border:none;cursor:pointer}
+footer{text-align:center;padding:16px;color:#94a3b8;font-size:14px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+video,canvas{max-width:100%;border-radius:10px;border:1px solid #334155}
+</style>
+</head>
+<body>
+<header>
+  <h1>Face Detection & Recognition System</h1>
+  <nav>
+    <button onclick="showPage('home')" class="active">Home</button>
+    <button onclick="showPage('about')">About</button>
+    <button onclick="showPage('method')">Methodology</button>
+    <button onclick="showPage('demo')">Live Demo</button>
+    <button onclick="showPage('applications')">Applications</button>
+    <button onclick="showPage('contact')">Conclusion</button>
+  </nav>
+</header>
+
+<main>
+<section id="home" class="page active">
+  <div class="card">
+    <h2>Introduction</h2>
+    <p>This project demonstrates the concept of Face Detection and Face Recognition using computer vision principles. It follows the academic workflow: detection → feature extraction → recognition.</p>
+  </div>
+  <div class="grid">
+    <div class="card"><h3>Face Detection</h3><p>Locates human faces in images or video frames.</p></div>
+    <div class="card"><h3>Face Recognition</h3><p>Identifies or verifies a person by comparing facial features.</p></div>
+    <div class="card"><h3>Technology</h3><p>OpenCV, LBPH, Eigenfaces, Fisherfaces (conceptual).</p></div>
+  </div>
+</section>
+
+<section id="about" class="page">
+  <div class="card">
+    <h2>Problem Statement</h2>
+    <ul>
+      <li>Variation in lighting and pose</li>
+      <li>Occlusion (masks, glasses)</li>
+      <li>High computational cost</li>
+      <li>Privacy and ethical concerns</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Objectives</h2>
+    <ul>
+      <li>Accurate face detection</li>
+      <li>Efficient recognition</li>
+      <li>Reduced false acceptance</li>
+    </ul>
+  </div>
+</section>
+
+<section id="method" class="page">
+  <div class="card">
+    <h2>System Methodology</h2>
+    <ol>
+      <li>Capture image from camera</li>
+      <li>Detect face using Haar Cascade (Viola-Jones)</li>
+      <li>Extract facial features</li>
+      <li>Train model (LBPH)</li>
+      <li>Predict and identify face</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h2>Algorithms Used</h2>
+    <ul>
+      <li>Viola–Jones Algorithm</li>
+      <li>Local Binary Pattern Histogram (LBPH)</li>
+      <li>Euclidean Distance</li>
+    </ul>
+  </div>
+</section>
+
+<section id="demo" class="page">
+  <div class="card">
+    <h2>Live Camera Demo (Browser Simulation)</h2>
+    <p>This is a browser-based demo. Real recognition requires backend OpenCV.</p>
+    <button class="primary" onclick="startCamera()">Start Camera</button>
+    <video id="video" autoplay></video>
+    <canvas id="canvas"></canvas>
+  </div>
+</section>
+
+<section id="applications" class="page">
+  <div class="card">
+    <h2>Applications</h2>
+    <div class="grid">
+      <div class="card">Attendance System</div>
+      <div class="card">Mobile Unlocking</div>
+      <div class="card">Security & Surveillance</div>
+      <div class="card">Access Control</div>
+      <div class="card">Healthcare Monitoring</div>
+      <div class="card">Law Enforcement</div>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="page">
+  <div class="card">
+    <h2>Conclusion</h2>
+    <p>Face Detection and Recognition systems provide secure, contactless identification. Accuracy depends on data quality, camera angle, and computational power.</p>
+    <h3>Future Scope</h3>
+    <ul>
+      <li>Deep Learning based CNN models</li>
+      <li>Cloud deployment</li>
+      <li>Real-time large-scale surveillance</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<footer>
+  Academic Mini Project – Face Detection & Recognition
+</footer>
+
+<script>
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'))
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+  event.target.classList.add('active')
+}
+
+async function startCamera(){
+  const video=document.getElementById('video')
+  const stream=await navigator.mediaDevices.getUserMedia({video:true})
+  video.srcObject=stream
+}
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediLocator - Find Medicines Near You</title>
+    <title>MediLocate - Find Medicines Near You</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -538,33 +538,6 @@
             </div>
         </div>
 
-        <!-- Testimonials -->
-        <section class="testimonials">
-            <h2>What Our Users Say</h2>
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-text">Found the nearest medical store in seconds! MediLocator saved my time during emergencies.</p>
-                    <p class="testimonial-author">- Priya Mehta</p>
-                </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-text">Best medical store locator app. Easy to search by location and medicine name.</p>
-                    <p class="testimonial-author">- Subhash Sehgal</p>
-                </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-text">Very accurate and helpful. Shows all nearby pharmacies with their details.</p>
-                    <p class="testimonial-author">- Snehal Shah</p>
-                </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-text">Excellent search experience. Found the right medicine store instantly!</p>
-                    <p class="testimonial-author">- Laksh Kankariya</p>
-                </div>
-            </div>
-        </section>
-
         <!-- FAQ -->
         <section class="faq">
             <h2>Frequently Asked Questions</h2>
@@ -601,28 +574,18 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>MediLocator</h3>
+                <h3>MediLocate</h3>
                 <p>Your trusted platform to find medical stores and locate medicines near you across India.</p>
             </div>
             <div class="footer-section">
-                <h3>Quick Links</h3>
-                <a href="{% url 'home' %}">Home</a>
-                <a href="{% url 'about_us' %}">About Us</a>
-                <a href="{% url 'prescription_scanner' %}">Prescription Scanner</a>
-                <a href="{% url 'feedback' %}">Feedback</a>
-            </div>
-            <div class="footer-section">
-                <h3>Services</h3>
-                <a href="#">Medical Store Locator</a>
-                <a href="#">Find Pharmacies</a>
-                <a href="#">Medicine Availability</a>
-                <a href="#">Location Search</a>
+                <h3>Contact</h3>
+                <p>Email: support@medilocate.com</p>
+                <p>Phone: +91-1800-XXX-XXXX</p>
             </div>
             <div class="footer-section">
                 <h3>Legal</h3>
                 <a href="#">Privacy Policy</a>
                 <a href="#">Terms of Service</a>
-                <a href="#">Contact Us</a>
             </div>
         </div>
     </footer>
@@ -1032,13 +995,91 @@
                     function(position) {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        const radius = 10; // 10 km radius
                         
                         console.log('Location obtained:', lat, lon);
                         
-                        // Redirect to search results with location mode
-                        const resultUrl = `/search-results/?lat=${lat}&lon=${lon}&radius=${radius}&mode=location`;
-                        window.location.href = resultUrl;
+                        // Show fetching city message
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finding City...';
+                        
+                        // Use multiple reverse geocoding APIs for better accuracy
+                        // Try Google-style free API first (more accurate)
+                        fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`)
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('===== LOCATION DEBUG =====');
+                                console.log('Your GPS Coordinates:', lat, lon);
+                                console.log('BigDataCloud Full Response:', data);
+                                console.log('City field:', data.city);
+                                console.log('Locality field:', data.locality);
+                                console.log('Principal Subdivision:', data.principalSubdivision);
+                                console.log('All locality info:', data.localityInfo);
+                                console.log('========================');
+                                
+                                // Extract city name - prioritize city field
+                                let city = data.city || data.locality || data.localityInfo?.administrative?.[3]?.name || data.principalSubdivision;
+                                
+                                if (!city) {
+                                    // Fallback to Nominatim
+                                    console.log('BigDataCloud failed, trying Nominatim...');
+                                    return fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`, {
+                                        headers: {
+                                            'User-Agent': 'MediLocate/1.0'
+                                        }
+                                    })
+                                        .then(res => res.json())
+                                        .then(data2 => {
+                                            console.log('Nominatim Response:', data2);
+                                            console.log('Nominatim Address:', data2.address);
+                                            
+                                            city = data2.address.city || 
+                                                  data2.address.town || 
+                                                  data2.address.municipality ||
+                                                  data2.address.village;
+                                            
+                                            if (!city) {
+                                                alert('📍 Could not detect your city. Please enter manually.');
+                                                btn.innerHTML = originalText;
+                                                btn.disabled = false;
+                                                return;
+                                            }
+                                            
+                                            console.log('Final city from Nominatim:', city);
+                                            
+                                            // Fill the search input with detected city
+                                            const searchInput = document.getElementById('simple-search-input');
+                                            searchInput.value = city;
+                                            searchInput.focus();
+                                            
+                                            // Reset button
+                                            btn.innerHTML = originalText;
+                                            btn.disabled = false;
+                                            
+                                            // Show success message
+                                            alert(`📍 Location detected: ${city}\n\nClick Search button to find pharmacies.`);
+                                        });
+                                }
+                                
+                                console.log('Final city from BigDataCloud:', city);
+                                
+                                // Fill the search input with detected city
+                                const searchInput = document.getElementById('simple-search-input');
+                                searchInput.value = city;
+                                searchInput.focus();
+                                
+                                // Reset button
+                                btn.innerHTML = originalText;
+                                btn.disabled = false;
+                                
+                                // Show success message with coordinates for verification
+                                alert(`📍 Location detected: ${city}\n\nGPS: ${lat.toFixed(4)}, ${lon.toFixed(4)}\n\nClick Search button to find pharmacies.`);
+                            })
+                            .catch(error => {
+                                console.error('Geocoding error:', error);
+                                // Reset button and alert user
+                                btn.innerHTML = originalText;
+                                btn.disabled = false;
+                                alert('📍 Could not detect your city. Please enter manually.');
+                            });
                     },
                     function(error) {
                         // Reset button
@@ -1052,11 +1093,11 @@
                         if (error.code === error.PERMISSION_DENIED) {
                             alert('📍 Location permission denied. Please enable location access in your browser settings.');
                         } else if (error.code === error.POSITION_UNAVAILABLE) {
-                            alert('📍 Location information is unavailable. Please try again or use City/Medicine search.');
+                            alert('📍 Location information is unavailable. Please try again or enter city manually.');
                         } else if (error.code === error.TIMEOUT) {
                             alert('📍 Location request timed out. Please try again.');
                         } else {
-                            alert('📍 Error getting location. Please try again or use City/Medicine search.');
+                            alert('📍 Error getting location. Please try again or enter city manually.');
                         }
                     },
                     {
@@ -1066,7 +1107,7 @@
                     }
                 );
             } else {
-                alert('📍 Geolocation is not supported by your browser. Please use City or Medicine search instead.');
+                alert('📍 Geolocation is not supported by your browser. Please enter city manually.');
             }
         }
 
@@ -1099,16 +1140,8 @@
         }
 
         function activateGPSSearch() {
-            // Scroll to search section smoothly
-            document.querySelector('.search-wrapper').scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-            
-            // Trigger GPS location after a short delay
-            setTimeout(() => {
-                useLocationSearch();
-            }, 600);
+            // Directly trigger GPS location detection
+            useLocationSearch();
         }
     </script>
 </body>

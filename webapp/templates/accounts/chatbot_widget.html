@@ -36,16 +36,16 @@
 
     <!-- Quick Actions -->
     <div class="chatbot-quick-actions">
-      <button class="quick-action-btn" onclick="sendChatbotMessage('How do I upload my prescription?')">
+      <button class="quick-action-btn" onclick="window.sendChatbotMessage('How do I upload my prescription?')">
         <i class="fas fa-file-upload"></i> Upload Prescription
       </button>
-      <button class="quick-action-btn" onclick="sendChatbotMessage('Find pharmacies near me')">
+      <button class="quick-action-btn" onclick="window.sendChatbotMessage('Find pharmacies near me')">
         <i class="fas fa-map-marker-alt"></i> Find Pharmacies
       </button>
-      <button class="quick-action-btn" onclick="sendChatbotMessage('How do I search for medicines?')">
+      <button class="quick-action-btn" onclick="window.sendChatbotMessage('How do I search for medicines?')">
         <i class="fas fa-search"></i> Search Medicines
       </button>
-      <button class="quick-action-btn" onclick="sendChatbotMessage('Help me with login')">
+      <button class="quick-action-btn" onclick="window.sendChatbotMessage('Help me with login')">
         <i class="fas fa-sign-in-alt"></i> Login Help
       </button>
     </div>
@@ -57,9 +57,9 @@
         id="chatbot-input" 
         class="chatbot-input" 
         placeholder="Type your question..."
-        onkeypress="handleChatbotKeyPress(event)"
+        onkeypress="window.handleChatbotKeyPress(event)"
       >
-      <button id="chatbot-send-btn" class="chatbot-send-btn" onclick="sendChatbotMessage()">
+      <button id="chatbot-send-btn" class="chatbot-send-btn" onclick="window.sendChatbotMessage()">
         <i class="fas fa-paper-plane"></i>
       </button>
     </div>
@@ -73,7 +73,7 @@
     bottom: 30px;
     right: 30px;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    z-index: 9999;
+    z-index: 99999;
   }
 
   /* Floating Button */
@@ -308,6 +308,132 @@
     padding: 0 !important;
   }
 
+  /* Medicine Search Results */
+  .medicine-results-widget {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .results-header-widget {
+    padding: 0.8rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 0.8rem;
+  }
+
+  .results-header-widget h4 {
+    font-size: 0.95rem;
+    margin: 0 0 0.3rem 0;
+  }
+
+  .results-count-widget {
+    font-size: 0.8rem;
+    opacity: 0.95;
+  }
+
+  .pharmacy-card-widget {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.8rem;
+    margin-bottom: 0.6rem;
+    transition: all 0.3s;
+  }
+
+  .pharmacy-card-widget:hover {
+    transform: translateX(3px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    border-color: #667eea;
+  }
+
+  .pharmacy-header-widget {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 0.6rem;
+  }
+
+  .pharmacy-name-widget {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #667eea;
+    flex: 1;
+  }
+
+  .pharmacy-rating-widget {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .pharmacy-info-widget {
+    color: #64748b;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin-bottom: 0.6rem;
+  }
+
+  .pharmacy-info-widget i {
+    width: 14px;
+    color: #667eea;
+    margin-right: 0.3rem;
+  }
+
+  .distance-badge-widget {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.3rem;
+  }
+
+  .medicines-list-widget {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .medicine-tag-widget {
+    background: #f0f4ff;
+    color: #667eea;
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    border: 1px solid #d0deff;
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .no-results-widget {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    color: #64748b;
+  }
+
+  .no-results-widget i {
+    font-size: 2rem;
+    color: #cbd5e1;
+    margin-bottom: 0.5rem;
+  }
+
   /* Quick Actions */
   .chatbot-quick-actions {
     display: grid;
@@ -406,52 +532,441 @@
 </style>
 
 <script>
-  // Chatbot Widget JS
-  const chatbotToggleBtn = document.getElementById('chatbot-toggle-btn');
-  const chatbotCloseBtn = document.getElementById('chatbot-close-btn');
-  const chatbotWindow = document.getElementById('chatbot-window');
-  const chatbotInput = document.getElementById('chatbot-input');
-  const chatbotMessages = document.getElementById('chatbot-messages');
+  // Chatbot Widget JS with Medicine Search - Global scope for cross-page access
+  window.chatbotToggleBtn = document.getElementById('chatbot-toggle-btn');
+  window.chatbotCloseBtn = document.getElementById('chatbot-close-btn');
+  window.chatbotWindow = document.getElementById('chatbot-window');
+  window.chatbotInput = document.getElementById('chatbot-input');
+  window.chatbotMessages = document.getElementById('chatbot-messages');
+  
+  window.userLocation = null;
+  window.sessionId = 'widget_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-  // Toggle chat window
-  chatbotToggleBtn.addEventListener('click', () => {
-    chatbotWindow.classList.toggle('active');
-    if (chatbotWindow.classList.contains('active')) {
-      chatbotInput.focus();
-    }
-  });
-
-  // Close chat window
-  chatbotCloseBtn.addEventListener('click', () => {
-    chatbotWindow.classList.remove('active');
-  });
-
-  // Handle key press
-  function handleChatbotKeyPress(event) {
-    if (event.key === 'Enter') {
-      sendChatbotMessage();
-    }
+  // Get user location on load
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        window.userLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+        console.log('Widget location obtained:', window.userLocation);
+      },
+      error => console.warn('Location access denied:', error)
+    );
   }
 
-  // Send message
-  function sendChatbotMessage(message = null) {
-    const text = message || chatbotInput.value.trim();
-    if (!text) return;
+  // Toggle chat window
+  if (window.chatbotToggleBtn) {
+    window.chatbotToggleBtn.addEventListener('click', () => {
+      window.chatbotWindow.classList.toggle('active');
+      if (window.chatbotWindow.classList.contains('active')) {
+        window.chatbotInput.focus();
+        // Show welcome message with options on first open
+        if (window.chatbotMessages.children.length === 0) {
+          window.showWelcomeMessage();
+        }
+      }
+    });
+  }
 
-    // Add user message
-    addChatbotMessage(text, 'user');
-    chatbotInput.value = '';
+  // Close chat window
+  if (window.chatbotCloseBtn) {
+    window.chatbotCloseBtn.addEventListener('click', () => {
+      window.chatbotWindow.classList.remove('active');
+    });
+  }
 
-    // Simulate bot thinking
+  // Handle quick action button clicks
+  document.addEventListener('click', function(event) {
+    // Upload Prescription button
+    if (event.target.closest('button') && event.target.textContent.includes('Upload Prescription')) {
+      window.chatbotWindow.classList.add('active');
+      window.addChatbotMessage('Upload Prescription', 'user');
+      window.handleUploadPrescription();
+    }
+    
+    // Find Pharmacies button
+    if (event.target.closest('button') && event.target.textContent.includes('Find Pharmacies')) {
+      window.chatbotWindow.classList.add('active');
+      window.addChatbotMessage('Find Pharmacies', 'user');
+      window.handleFindPharmacies();
+    }
+    
+    // Search Medicines button
+    if (event.target.closest('button') && event.target.textContent.includes('Search Medicines')) {
+      window.chatbotWindow.classList.add('active');
+      window.addChatbotMessage('Search Medicines', 'user');
+      window.handleSearchMedicines();
+    }
+    
+    // Login Help button
+    if (event.target.closest('button') && event.target.textContent.includes('Login Help')) {
+      window.chatbotWindow.classList.add('active');
+      window.addChatbotMessage('Login Help', 'user');
+      window.handleLoginHelp();
+    }
+  });
+
+  // Welcome message with options - Global function
+  window.showWelcomeMessage = function() {
+    const welcomeDiv = document.createElement('div');
+    welcomeDiv.className = 'chatbot-message bot';
+    welcomeDiv.innerHTML = `
+      <div class="message-avatar">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div class="message-content">
+        <p><strong>MediBot:</strong> Welcome to MediLocate! 👋</p>
+        <p>I can help you with:</p>
+        <ul style="list-style: none; padding: 0; margin: 10px 0;">
+          <li>💊 <strong>Search Medicines</strong> - Find specific medicines</li>
+          <li>🏥 <strong>Find Pharmacies</strong> - Locate nearby pharmacies</li>
+          <li>📋 <strong>Upload Prescription</strong> - Scan your prescription</li>
+          <li>🔐 <strong>Login Help</strong> - Account assistance</li>
+        </ul>
+        <p>Click any button above or type your question!</p>
+      </div>
+    `;
+    window.chatbotMessages.appendChild(welcomeDiv);
+  }
+
+  // Handle Upload Prescription action - Global function
+  window.handleUploadPrescription = function() {
     setTimeout(() => {
-      const response = getAIResponse(text);
+      const response = `
+        <div style="line-height: 1.8;">
+          <div style="font-weight: 700; font-size: 1.1rem; color: #667eea; margin-bottom: 0.8rem;">
+            📋 Upload Prescription Guide
+          </div>
+          
+          <div style="margin-bottom: 0.8rem;">To upload your prescription, follow these steps:</div>
+          
+          <div style="background: #f7f9fc; padding: 1rem; border-radius: 10px; margin: 0.8rem 0;">
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">1. Click "Prescription Scanner" in navigation</div>
+            
+            <div style="font-weight: 600; margin: 0.8rem 0;">2. You have 3 upload options:</div>
+            <div style="padding-left: 1rem;">
+              <div style="margin: 0.4rem 0;">📁 Drag & drop your file</div>
+              <div style="margin: 0.4rem 0;">📂 Click upload area to browse</div>
+              <div style="margin: 0.4rem 0;">📷 Take photo with camera</div>
+            </div>
+            
+            <div style="font-weight: 600; margin: 0.8rem 0 0.5rem 0;">3. Click "Upload & Scan"</div>
+            <div style="font-weight: 600; margin: 0.5rem 0;">4. AI analyzes in seconds! ⚡</div>
+          </div>
+          
+          <div style="background: #e0f2fe; padding: 0.6rem 1rem; border-radius: 8px; border-left: 3px solid #0ea5e9; margin: 0.8rem 0;">
+            <strong>Supported:</strong> JPG, PNG, PDF (Max 5MB)
+          </div>
+          
+          <div style="margin-top: 0.8rem; color: #667eea;">
+            Would you like to go to the prescription upload page?
+          </div>
+        </div>
+      `;
+      
       addChatbotMessage(response, 'bot');
-      chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
     }, 800);
   }
 
-  // Add message to chat
-  function addChatbotMessage(text, sender) {
+  // Handle Find Pharmacies action - Global function
+  window.handleFindPharmacies = function() {
+    setTimeout(() => {
+      const response = `
+        <div style="line-height: 1.8;">
+          <div style="font-weight: 700; font-size: 1.1rem; color: #667eea; margin-bottom: 0.8rem;">
+            📍 Find Pharmacies Near You
+          </div>
+          
+          <div style="margin-bottom: 0.8rem;">I can help you locate pharmacies in two ways:</div>
+          
+          <div style="background: #f0fdf4; padding: 1rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid #10b981;">
+            <div style="font-weight: 700; color: #059669; margin-bottom: 0.5rem;">Option 1: Search by Medicine</div>
+            <div>Just type the medicine name, and I'll show you all pharmacies that have it in stock!</div>
+          </div>
+          
+          <div style="background: #fef3c7; padding: 1rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid #f59e0b;">
+            <div style="font-weight: 700; color: #d97706; margin-bottom: 0.5rem;">Option 2: Browse All Pharmacies</div>
+            <div style="padding-left: 1rem;">
+              <div>1. Go to the home page</div>
+              <div>2. Use the search bar</div>
+              <div>3. Enter your location (or "Get Location")</div>
+              <div>4. Click Search to see nearby pharmacies</div>
+            </div>
+          </div>
+          
+          <div style="background: #e0e7ff; padding: 0.6rem 1rem; border-radius: 8px; margin-top: 0.8rem;">
+            💡 <strong>Tip:</strong> Enable location access for accurate distance calculations!
+          </div>
+          
+          <div style="margin-top: 0.8rem;">
+            Which would you prefer? Type a medicine name or ask me to "show all pharmacies near me"
+          </div>
+        </div>
+      `;
+      
+      addChatbotMessage(response, 'bot');
+    }, 800);
+  }
+
+  // Handle Search Medicines action - Global function
+  window.handleSearchMedicines = function() {
+    setTimeout(() => {
+      const response = `
+        <div style="line-height: 1.8;">
+          <div style="font-weight: 700; font-size: 1.1rem; color: #667eea; margin-bottom: 0.8rem;">
+            🔍 Medicine Search Mode
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 10px; margin: 0.8rem 0;">
+            <div style="font-weight: 700; margin-bottom: 0.5rem;">I'm ready to search medicines! 💊</div>
+            <div style="font-size: 0.9rem;">Just type any medicine name below</div>
+          </div>
+          
+          <div style="margin: 0.8rem 0;">
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">I will automatically:</div>
+            <div style="background: #f7f9fc; padding: 1rem; border-radius: 8px;">
+              <div style="margin: 0.3rem 0;">✅ Search our database</div>
+              <div style="margin: 0.3rem 0;">✅ Find nearby pharmacies with stock</div>
+              <div style="margin: 0.3rem 0;">✅ Show prices & availability</div>
+              <div style="margin: 0.3rem 0;">✅ Calculate distances from you</div>
+            </div>
+          </div>
+          
+          <div style="background: #ede9fe; padding: 1rem; border-radius: 10px; margin: 0.8rem 0;">
+            <div style="font-weight: 600; color: #7c3aed; margin-bottom: 0.5rem;">Try these examples:</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+              <span style="background: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.85rem;">Paracetamol</span>
+              <span style="background: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.85rem;">Amoxicillin</span>
+              <span style="background: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.85rem;">Aspirin</span>
+              <span style="background: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.85rem;">Metformin</span>
+            </div>
+          </div>
+          
+          <div style="margin-top: 0.8rem; color: #667eea; font-weight: 600;">
+            Type a medicine name below to get started! 👇
+          </div>
+        </div>
+      `;
+      
+      addChatbotMessage(response, 'bot');
+    }, 800);
+  }
+
+  // Handle Login Help action - Global function
+  window.handleLoginHelp = function() {
+    setTimeout(() => {
+      const response = `
+        <div style="line-height: 1.8;">
+          <div style="font-weight: 700; font-size: 1.1rem; color: #667eea; margin-bottom: 0.8rem;">
+            🔐 Login & Account Help
+          </div>
+          
+          <div style="background: #dbeafe; padding: 1rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid #3b82f6;">
+            <div style="font-weight: 700; color: #1e40af; margin-bottom: 0.5rem;">To Login:</div>
+            <div style="padding-left: 1rem;">
+              <div>1. Click "Login" in top navigation</div>
+              <div>2. Enter email and password</div>
+              <div>3. Click "Sign In"</div>
+            </div>
+          </div>
+          
+          <div style="background: #dcfce7; padding: 1rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid #10b981;">
+            <div style="font-weight: 700; color: #047857; margin-bottom: 0.5rem;">New User? Register:</div>
+            <div style="padding-left: 1rem;">
+              <div>1. Click "Register" on login page</div>
+              <div>2. Fill in your details:</div>
+              <div style="padding-left: 1rem; margin-top: 0.3rem;">
+                <div>• Full Name</div>
+                <div>• Email Address</div>
+                <div>• Password (secure)</div>
+                <div>• Phone Number</div>
+              </div>
+              <div>3. Click "Create Account"</div>
+            </div>
+          </div>
+          
+          <div style="background: #fef3c7; padding: 1rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid #f59e0b;">
+            <div style="font-weight: 700; color: #d97706; margin-bottom: 0.5rem;">Forgot Password?</div>
+            <div style="padding-left: 1rem;">
+              <div>• Use "Forgot Password" link</div>
+              <div>• Enter your email</div>
+              <div>• Check inbox for reset link</div>
+            </div>
+          </div>
+          
+          <div style="background: #f3f4f6; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 0.8rem;">
+            <div style="font-weight: 600; margin-bottom: 0.3rem;">Need Help?</div>
+            <div style="font-size: 0.9rem;">📧 support@medilocate.com</div>
+            <div style="font-size: 0.9rem;">📞 +91-XXXX-XXXXXX</div>
+          </div>
+          
+          <div style="margin-top: 0.8rem; color: #667eea;">
+            Would you like me to redirect you to the login page?
+          </div>
+        </div>
+      `;
+      
+      addChatbotMessage(response, 'bot');
+    }, 800);
+  }
+
+  // Handle key press - Global function
+  window.handleChatbotKeyPress = function(event) {
+    if (event.key === 'Enter') {
+      window.sendChatbotMessage();
+    }
+  }
+
+  // Send message with medicine search capability - Global function
+  window.sendChatbotMessage = function(message = null) {
+    const text = message || window.chatbotInput.value.trim();
+    if (!text) return;
+
+    // Add user message (skip if it's from button click and already added)
+    if (!message) {
+      window.addChatbotMessage(text, 'user');
+    }
+    window.chatbotInput.value = '';
+
+    // Check for special commands first
+    const lowerText = text.toLowerCase();
+    
+    // Handle button-triggered actions
+    if (lowerText === 'upload prescription') {
+      window.handleUploadPrescription();
+      return;
+    }
+    if (lowerText === 'find pharmacies') {
+      window.handleFindPharmacies();
+      return;
+    }
+    if (lowerText === 'search medicines') {
+      window.handleSearchMedicines();
+      return;
+    }
+    if (lowerText === 'login help') {
+      window.handleLoginHelp();
+      return;
+    }
+
+    // Send to backend for intelligent medicine search processing
+    fetch('/chatbot-response/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': window.getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        user_message: text,
+        latitude: window.userLocation ? window.userLocation.latitude : null,
+        longitude: window.userLocation ? window.userLocation.longitude : null,
+        session_id: window.sessionId
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.session_id) {
+        window.sessionId = data.session_id;
+      }
+
+      if (data.type === 'medicine_search' && data.medicine_found) {
+        // Display medicine search results
+        window.displayMedicineResults(data);
+      } else if (data.type === 'text' || data.bot_reply) {
+        // Display text response
+        window.addChatbotMessage(data.bot_reply, 'bot');
+      }
+      
+      window.chatbotMessages.scrollTop = window.chatbotMessages.scrollHeight;
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      window.addChatbotMessage('Sorry, I encountered an error. Please try again.', 'bot');
+    });
+  }
+
+  // Display medicine search results - Global function
+  window.displayMedicineResults = function(data) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chatbot-message bot';
+    
+    let medicineNames = data.medicines.map(m => m.name).join(', ');
+    let pharmacyCount = data.total_pharmacies;
+    
+    let htmlContent = `
+      <div class="message-avatar">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div class="message-content">
+        <div class="medicine-results-widget">
+          <div class="results-header-widget">
+            <h4><i class="fas fa-pills"></i> Found: ${medicineNames}</h4>
+            <div class="results-count-widget">
+              <i class="fas fa-store"></i> ${pharmacyCount} ${pharmacyCount === 1 ? 'pharmacy' : 'pharmacies'}
+              ${data.has_location ? '<br><i class="fas fa-location-arrow"></i> By distance' : '<br><i class="fas fa-star"></i> By rating'}
+            </div>
+          </div>
+    `;
+    
+    if (data.pharmacies && data.pharmacies.length > 0) {
+      data.pharmacies.slice(0, 5).forEach(pharmacy => {
+        htmlContent += `
+          <div class="pharmacy-card-widget">
+            <div class="pharmacy-header-widget">
+              <div class="pharmacy-name-widget">
+                <i class="fas fa-store"></i> ${pharmacy.name}
+              </div>
+              <div class="pharmacy-rating-widget">
+                <i class="fas fa-star"></i> ${pharmacy.rating}
+              </div>
+            </div>
+            <div class="pharmacy-info-widget">
+              <div><i class="fas fa-map-marker-alt"></i> ${pharmacy.address}</div>
+              <div><i class="fas fa-phone"></i> ${pharmacy.phone}</div>
+              ${pharmacy.distance ? `<div class="distance-badge-widget"><i class="fas fa-route"></i> ${pharmacy.distance} km</div>` : ''}
+            </div>
+            <div class="medicines-list-widget">
+        `;
+        
+        if (pharmacy.medicines && pharmacy.medicines.length > 0) {
+          pharmacy.medicines.slice(0, 3).forEach(med => {
+            htmlContent += `
+              <span class="medicine-tag-widget">
+                <i class="fas fa-pills"></i> ${med.name}
+                ${med.price > 0 ? ` ₹${med.price}` : ''}
+              </span>
+            `;
+          });
+        }
+        
+        htmlContent += `
+            </div>
+          </div>
+        `;
+      });
+      
+      if (pharmacyCount > 5) {
+        htmlContent += `<p style="text-align: center; color: #667eea; font-size: 0.85rem; margin-top: 0.5rem;">+ ${pharmacyCount - 5} more pharmacies available</p>`;
+      }
+    } else {
+      htmlContent += `
+        <div class="no-results-widget">
+          <i class="fas fa-sad-tear"></i>
+          <p>No pharmacies found with this medicine.</p>
+        </div>
+      `;
+    }
+    
+    htmlContent += `</div></div>`;
+    messageDiv.innerHTML = htmlContent;
+    window.chatbotMessages.appendChild(messageDiv);
+    window.chatbotMessages.scrollTop = window.chatbotMessages.scrollHeight;
+  }
+
+  // Add message to chat - Global function
+  window.addChatbotMessage = function(text, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chatbot-message ${sender}`;
     
@@ -475,51 +990,23 @@
       `;
     }
     
-    chatbotMessages.appendChild(messageDiv);
-    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    window.chatbotMessages.appendChild(messageDiv);
+    window.chatbotMessages.scrollTop = window.chatbotMessages.scrollHeight;
   }
 
-  // Smart NLP Response Generator
-  function getAIResponse(userMessage) {
-    const msg = userMessage.toLowerCase().trim();
-
-    // Prescription Upload
-    if (msg.includes('upload') || msg.includes('prescription')) {
-      return `📋 To upload your prescription:\n1. Click the "Prescription Scanner" in the navigation\n2. Either drag & drop your file or click the upload area\n3. Alternatively, click "Take Photo with Camera" to capture a photo\n4. Click "Upload & Scan Prescription" button\n5. Our AI will analyze it instantly!`;
+  // Get CSRF token - Global function
+  window.getCookie = function(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
     }
-
-    // Pharmacy Search & Location
-    if (msg.includes('pharmacy') || msg.includes('pharmacies') || msg.includes('near me')) {
-      return `📍 Finding Pharmacies:\n1. Use the search bar on the home page\n2. Enter your location (or use "Get Location" for current location)\n3. Search for the medicine you need\n4. We'll show you all nearby pharmacies with availability\n💡 Pro tip: Allow location access for faster results!`;
-    }
-
-    // Medicine Search
-    if (msg.includes('search') || msg.includes('medicine') || msg.includes('medicine')) {
-      return `🔍 How to Search for Medicines:\n1. Go to the home page\n2. Enter the medicine name in the search bar\n3. Select your location\n4. Press Enter or click Search\n5. View results with availability\n✨ You can also use voice search!`;
-    }
-
-    // Login Help
-    if (msg.includes('login') || msg.includes('signin') || msg.includes('account') || msg.includes('register')) {
-      return `🔐 Login & Account Help:\n1. Click "Login" in the top navigation\n2. Enter your email and password\n3. Don't have an account? Click "Register"\n4. Fill in your details and create an account\n5. Enjoy personalized features and saved searches!\n📧 Forgot password? Use the "Forgot Password" link on login page`;
-    }
-
-    // Amoxicillin or medicine info
-    if (msg.includes('amoxicillin') || msg.includes('paracetamol') || msg.includes('aspirin') || msg.includes('medicine')) {
-      const medicineName = msg.match(/amoxicillin|paracetamol|aspirin|ibuprofen|metformin/i)?.[0] || 'this medicine';
-      return `💊 Medicine Information:\n${medicineName.charAt(0).toUpperCase() + medicineName.slice(1)} is a commonly used medication.\n\n⚠️ For detailed information:\n1. Search for "${medicineName}" on our platform\n2. View availability at nearby pharmacies\n3. Check real-time stock information\n4. Consult with pharmacists for usage guidelines\n\n📞 Always consult your doctor before taking new medicines!`;
-    }
-
-    // General website help
-    if (msg.includes('how') || msg.includes('help') || msg.includes('feature') || msg.includes('what')) {
-      return `🏥 MediLocator Features:\n✅ Medicine Search - Find medicines by name\n✅ Pharmacy Locator - Locate pharmacies near you\n✅ Prescription Scanner - Upload prescriptions for instant analysis\n✅ Availability Check - Real-time stock availability\n\nWhich feature would you like help with?`;
-    }
-
-    // About us
-    if (msg.includes('about') || msg.includes('medilocator') || msg.includes('who are you')) {
-      return `🏥 About MediLocator:\nMediLocator is your trusted platform for finding medicines quickly and easily across India.\n\n🎯 Our Mission:\n• Help you locate medicines near you\n• Find pharmacies with available stock\n• Save time with our AI-powered prescription scanner\n• Provide reliable healthcare solutions\n\n🌍 Available in major cities across India!`;
-    }
-
-    // Default response
-    return `😊 I understand you're asking about "${userMessage}".\n\nHere are some things I can help with:\n• 📋 Upload prescriptions\n• 🔍 Search for medicines\n• 📍 Find nearby pharmacies\n• 💊 Medicine information\n• 🔐 Account & login help\n\nTry asking something like: "How do I upload my prescription?" or "Find pharmacies near me"`;
+    return cookieValue;
   }
 </script>

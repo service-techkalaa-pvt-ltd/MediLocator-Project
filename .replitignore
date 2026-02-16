@@ -1,0 +1,48 @@
+# Replit Ignore File
+# Files and directories listed here will not be synced to Replit
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large ML models (upload separately if needed)
+ml_models/dataset/
+ml_models/prescription_detector/*.pt
+*.h5
+*.pkl
+*.sav
+
+# Logs
+*.log
+
+# Database (regenerate on Replit)
+# db.sqlite3
+
+# Media files (can be large)
+# media/
+
+# Local environment
+.env
+
+# Build artifacts
+dist/
+build/
+*.egg-info/

@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Pharmacy - Admin</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f7fa; text-align: center; }
+        .verify-box { background: white; padding: 40px; border-radius: 10px; max-width: 600px; margin: 50px auto; }
+        .pharmacy-info { text-align: left; margin: 30px 0; padding: 20px; background: #f7fafc; border-radius: 8px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; margin: 10px; font-size: 16px; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-danger { background: #f56565; color: white; }
+        .btn-secondary { background: #718096; color: white; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="verify-box">
+        <h2>Verify Pharmacy</h2>
+        <div class="pharmacy-info">
+            <p><strong>Name:</strong> {{ pharmacy.name }}</p>
+            <p><strong>Address:</strong> {{ pharmacy.address }}</p>
+            <p><strong>City:</strong> {{ pharmacy.city }}, {{ pharmacy.state }} - {{ pharmacy.pincode }}</p>
+            <p><strong>Phone:</strong> {{ pharmacy.phone }}</p>
+            <p><strong>Email:</strong> {{ pharmacy.email }}</p>
+            <p><strong>Current Status:</strong> <span style="color: {% if pharmacy.verified %}#48bb78{% else %}#ed8936{% endif %};">{% if pharmacy.verified %}VERIFIED{% else %}UNVERIFIED{% endif %}</span></p>
+        </div>
+        
+        <form method="POST" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" name="action" value="approve" class="btn btn-success">✓ Approve</button>
+            <button type="submit" name="action" value="reject" class="btn btn-danger">✗ Reject</button>
+        </form>
+        <br><br>
+        <a href="{% url 'admin_pharmacies' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</body>
+</html>

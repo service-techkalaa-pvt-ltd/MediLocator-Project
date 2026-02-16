@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - MediLocator</title>
+    <title>About Us - MediLocate</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -46,50 +46,31 @@
     <!-- Include New Header -->
     {% include 'accounts/header.html' %}
     
-    <section class="hero"><h1>About MediLocator</h1><p>Your trusted partner in finding medicines easily and affordably</p></section>
+    <section class="hero"><h1>About MediLocate</h1><p>Your trusted partner in finding medicines easily and affordably</p></section>
     <div class="container">
         <section class="section">
             <h2>Our Mission</h2>
-            <p>MediLocator aims to revolutionize how people find and access medicines. We believe everyone deserves easy, affordable access to quality medicines without hassle.</p>
+            <p>MediLocate aims to revolutionize how people find and access medicines. We believe everyone deserves easy, affordable access to quality medicines without hassle.</p>
         </section>
         <section class="section">
             <h2>What We Offer</h2>
             <div class="grid">
-                <div class="card"><i class="fas fa-search"></i><h3>Medicine Search</h3><p>Find medicines by name, composition, or condition instantly</p></div>
-                <div class="card"><i class="fas fa-map-location-dot"></i><h3>Pharmacy Locator</h3><p>Locate nearby pharmacies in real-time with directions</p></div>
-                <div class="card"><i class="fas fa-file-prescription"></i><h3>Prescription Scanner</h3><p>Upload prescriptions for instant medicine identification</p></div>
-                <div class="card"><i class="fas fa-map-marker-alt"></i><h3>Location Search</h3><p>Find pharmacies near your location instantly</p></div>
-            </div>
-        </section>
-        <section class="section">
-            <h2>Why Choose Us</h2>
-            <div class="grid">
-                <div class="card"><i class="fas fa-bolt"></i><h3>Fast Service</h3><p>Get results in seconds, not hours</p></div>
-                <div class="card"><i class="fas fa-shield"></i><h3>Secure & Safe</h3><p>Your data is encrypted and protected</p></div>
-                <div class="card"><i class="fas fa-check-circle"></i><h3>Accurate Info</h3><p>Real-time data from verified pharmacies</p></div>
-                <div class="card"><i class="fas fa-headset"></i><h3>24/7 Support</h3><p>We're always here to help</p></div>
-            </div>
-        </section>
-        <section class="section">
-            <h2>Our Journey</h2>
-            <div class="timeline">
-                <div class="timeline-item"><div class="timeline-marker">1</div><div class="timeline-content"><h4>Founded (2023)</h4><p>Started with a vision to make medicine search simple</p></div></div>
-                <div class="timeline-item"><div class="timeline-marker">2</div><div class="timeline-content"><h4>First Launch (2024)</h4><p>Launched our web platform with 5,000+ pharmacies</p></div></div>
-                <div class="timeline-item"><div class="timeline-marker">3</div><div class="timeline-content"><h4>AI Integration (2024)</h4><p>Added prescription scanner with AI technology</p></div></div>
-                <div class="timeline-item"><div class="timeline-marker">4</div><div class="timeline-content"><h4>Expansion (2025)</h4><p>Expanding to 50,000+ pharmacies nationwide</p></div></div>
+                <div class="card"><i class="fas fa-search"></i><h3>Medicine Search</h3><p>Find medicines by name instantly</p></div>
+                <div class="card"><i class="fas fa-map-location-dot"></i><h3>Pharmacy Locator</h3><p>Locate nearby pharmacies in real-time</p></div>
+                <div class="card"><i class="fas fa-file-prescription"></i><h3>Prescription Scanner</h3><p>Upload prescriptions with AI</p></div>
+                <div class="card"><i class="fas fa-bolt"></i><h3>Fast & Secure</h3><p>Quick results with encrypted data</p></div>
             </div>
         </section>
         <section class="section">
             <h2>Contact Us</h2>
-            <p style="text-align:center"><strong>Email:</strong> support@medilocator.com | <strong>Phone:</strong> +91 9240250346 | <strong>Address:</strong> Mumbai, Maharashtra</p>
+            <p style="text-align:center"><strong>Email:</strong> support@medilocate.com | <strong>Phone:</strong> +91 9240250346</p>
         </section>
     </div>
     <footer class="footer">
         <div class="footer-content">
-            <div class="footer-section"><h3>MediLocator</h3><p>Your trusted medicine search platform across India</p></div>
-            <div class="footer-section"><h3>Links</h3><a href="{% url 'home' %}">Home</a><a href="{% url 'about_us' %}">About</a><a href="{% url 'prescription_scanner' %}">Scanner</a></div>
-            <div class="footer-section"><h3>Services</h3><a href="#">Medicine Search</a><a href="#">Pharmacy Locator</a><a href="#">Medicine Information</a></div>
-            <div class="footer-section"><h3>Legal</h3><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div>
+            <div class="footer-section"><h3>MediLocate</h3><p>Your trusted medicine search platform across India</p></div>
+            <div class="footer-section"><h3>Contact</h3><p>Email: support@medilocate.com<br>Phone: +91 9240250346</p></div>
+            <div class="footer-section"><h3>Legal</h3><p><a href="#">Privacy Policy</a><br><a href="#">Terms of Service</a></p></div>
         </div>
     </footer>
     {% include 'accounts/chatbot_widget.html' %}

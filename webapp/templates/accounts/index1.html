@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prescription Scanner - MediLocator</title>
+  <title>Prescription Scanner - MediLocate</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
@@ -721,38 +721,26 @@
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-section">
-        <h3>🏥 MediLocator</h3>
+        <h3>🏥 MediLocate</h3>
         <p>Your trusted partner in finding medicines quickly and easily across India.</p>
       </div>
       
       <div class="footer-section">
-        <h3>Quick Links</h3>
-        <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'about_us' %}">About Us</a>
-        <a href="{% url 'feedback' %}">Feedback</a>
-        {% if not user.is_authenticated %}
-          <a href="{% url 'login' %}">Login</a>
-          <a href="{% url 'register' %}">Register</a>
-        {% endif %}
-      </div>
-      
-      <div class="footer-section">
-        <h3>Services</h3>
-        <a href="#">Medicine Search</a>
-        <a href="#">Pharmacy Locator</a>
-        <a href="{% url 'index1' %}">Prescription Upload</a>
-      </div>
-      
-      <div class="footer-section">
         <h3>Contact</h3>
-        <a href="mailto:support@medilocator.com">support@medilocator.com</a>
+        <a href="mailto:support@medilocate.com">support@medilocate.com</a>
         <a href="tel:+919240250346">+91 9240250346</a>
-        <a href="#">Mumbai, Maharashtra</a>
+        <p>Mumbai, Maharashtra</p>
+      </div>
+      
+      <div class="footer-section">
+        <h3>Legal</h3>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
       </div>
     </div>
     
     <div class="footer-bottom">
-      <p>&copy; 2024 MediLocator. All rights reserved.</p>
+      <p>&copy; 2024 MediLocate. All rights reserved.</p>
     </div>
   </footer>
 

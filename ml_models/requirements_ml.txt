@@ -1,0 +1,41 @@
+# ML Model Requirements for Prescription Detection
+# Install with: pip install -r requirements_ml.txt
+
+# Roboflow (for dataset download)
+roboflow>=1.1.0
+
+# Core Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.0.0  # YOLOv8
+
+# Computer Vision
+opencv-python>=4.8.0
+opencv-contrib-python>=4.8.0
+Pillow>=10.0.0
+
+# OCR
+pytesseract>=0.3.10
+pdf2image>=1.16.3
+
+# Text Processing & Matching
+rapidfuzz>=3.0.0
+
+# Data Science
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Utilities
+PyYAML>=6.0
+tqdm>=4.65.0
+requests>=2.31.0
+
+# Optional: For GPU support (CUDA 11.8)
+# --extra-index-url https://download.pytorch.org/whl/cu118
+# If you have CUDA 12.1, use cu121 instead
+
+# Optional: For better visualization
+# plotly>=5.17.0
+# ipywidgets>=8.1.0
