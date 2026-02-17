@@ -18,6 +18,7 @@ import difflib
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.db.models import Q
 import json
 from django.http import FileResponse
 import re
@@ -141,7 +142,7 @@ def search_results_page(request):
         except Medicine.DoesNotExist:
             pass
         
-        # Try fuzzy matching (80%+ similarity)
+        # Try fuzzy matching (70%+ similarity - lowered for better brand name matching)
         fuzzy_matches = process.extract(
             med_name, 
             all_medicines.keys(), 
@@ -149,10 +150,24 @@ def search_results_page(request):
             limit=5
         )
         
-        for match_name, score, _ in fuzzy_matches:
-            if score >= 80:  # 80% or higher similarity
-                medicine = all_medicines[match_name]
-                if medicine.id not in medicine_ids:
+        # Also try fuzzy matching on generic names
+        generic_names = {m.generic_name: m for m in Medicine.objects.all() if m.generic_name}
+        generic_fuzzy = process.extract(
+            med_name,
+            generic_names.keys(),
+            scorer=fuzz.ratio,
+            limit=5
+        )
+        
+        # Combine matches from both name and generic name
+        all_fuzzy_matches = list(fuzzy_matches) + [(name, score, idx) for name, score, idx in generic_fuzzy]
+        all_fuzzy_matches.sort(key=lambda x: x[1], reverse=True)  # Sort by score
+        
+        for match_name, score, _ in all_fuzzy_matches[:5]:
+            if score >= 70:  # 70% or higher similarity (lowered from 80%)
+                # Get medicine from either dict
+                medicine = all_medicines.get(match_name) or generic_names.get(match_name)
+                if medicine and medicine.id not in medicine_ids:
                     medicine_ids.append(medicine.id)
                     medicines_found.append({
                         'name': medicine.name,
@@ -161,9 +176,12 @@ def search_results_page(request):
                         'match_score': score
                     })
         
-        # If still no match, try partial contains
+        # If still no match, try partial contains on both name and generic name
         if not any(m['searched_for'] == med_name for m in medicines_found):
-            matches = Medicine.objects.filter(name__icontains=med_name)[:2]
+            matches = Medicine.objects.filter(
+                models.Q(name__icontains=med_name) |
+                models.Q(generic_name__icontains=med_name)
+            )[:3]
             for medicine in matches:
                 if medicine.id not in medicine_ids:
                     medicine_ids.append(medicine.id)
@@ -171,7 +189,7 @@ def search_results_page(request):
                         'name': medicine.name,
                         'generic_name': medicine.generic_name,
                         'searched_for': med_name,
-                        'match_score': 70
+                        'match_score': 60
                     })
     
     context['medicines_found'] = medicines_found

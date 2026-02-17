@@ -156,6 +156,72 @@ def extract_text_from_prescription(image_path):
         }
 
 
+# Brand name to Generic name mapping (common Indian brands)
+BRAND_TO_GENERIC_MAP = {
+    # Antihistamines
+    'levosiz': 'levocetirizine',
+    'levocet': 'levocetirizine',
+    'levocetrizine': 'levocetirizine',
+    'cetrizine': 'cetirizine',
+    'zyrtec': 'cetirizine',
+    'cetzine': 'cetirizine',
+    
+    # Antifungals
+    'forcan': 'fluconazole',
+    'diflucan': 'fluconazole',
+    'flucon': 'fluconazole',
+    'zimig': 'ketoconazole',
+    'ketocip': 'ketoconazole',
+    'nizral': 'ketoconazole',
+    
+    # Antibiotics
+    'mox': 'amoxicillin',
+    'novamox': 'amoxicillin',
+    'amoxil': 'amoxicillin',
+    'zithromax': 'azithromycin',
+    'azee': 'azithromycin',
+    'azithral': 'azithromycin',
+    'augmentin': 'amoxicillin + clavulanic acid',
+    'cipcal': 'ciprofloxacin',
+    'ciplox': 'ciprofloxacin',
+    
+    # Pain/Fever
+    'crocin': 'paracetamol',
+    'dolo': 'paracetamol',
+    'calpol': 'paracetamol',
+    'metacin': 'paracetamol',
+    'brufen': 'ibuprofen',
+    'combiflam': 'ibuprofen + paracetamol',
+    
+    # Blood pressure
+    'amlodac': 'amlodipine',
+    'amlong': 'amlodipine',
+    'norvasc': 'amlodipine',
+    'telma': 'telmisartan',
+    
+    # Cholesterol
+    'atorva': 'atorvastatin',
+    'lipitor': 'atorvastatin',
+    'deplatt': 'clopidogrel',
+    
+    # Diabetes
+    'glycomet': 'metformin',
+    'glucophage': 'metformin',
+    'januvia': 'sitagliptin',
+    
+    # Proton pump inhibitors
+    'pan': 'pantoprazole',
+    'pantocid': 'pantoprazole',
+    'esoz': 'esomeprazole',
+    'omez': 'omeprazole',
+    'rablet': 'rabeprazole',
+    
+    # Antacids
+    'digene': 'aluminium hydroxide + magnesium hydroxide',
+    'gelusil': 'aluminium hydroxide + magnesium hydroxide',
+}
+
+
 def extract_potential_medicine_names(text):
     """
     Extract potential medicine names from OCR text using patterns
@@ -206,6 +272,23 @@ def extract_potential_medicine_names(text):
             candidate_clean not in stop_words and
             not candidate_clean.isdigit()):
             filtered.append(candidate)
+    
+    # Also check for brand names and add their generic equivalents
+    brand_matches = []
+    for candidate in filtered:
+        candidate_lower = candidate.lower().strip()
+        # Check if it matches a brand name
+        if candidate_lower in BRAND_TO_GENERIC_MAP:
+            brand_matches.append(BRAND_TO_GENERIC_MAP[candidate_lower])
+        # Check partial matches (brand name contains or is contained)
+        for brand, generic in BRAND_TO_GENERIC_MAP.items():
+            if len(candidate_lower) >= 4:
+                if brand in candidate_lower or candidate_lower in brand:
+                    if len(candidate_lower) >= len(brand) * 0.7:  # At least 70% of brand name
+                        brand_matches.append(generic)
+    
+    # Combine original candidates with brand matches
+    filtered.extend(brand_matches)
     
     return list(set(filtered))
 
