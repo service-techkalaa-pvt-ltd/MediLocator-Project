@@ -28,6 +28,7 @@ import pickle
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 import io
+from .medicine_knowledge import get_medicine_info, format_medicine_info
 
 # Create your views here.
 def registerPage(request):
@@ -525,11 +526,16 @@ def chatbot_response(request):
                 'is', 'are', 'should', 'could', 'would', 'help', 'explain', 'tell me',
                 '?', 'which', 'will'
             ]
+            medicine_keywords = ['find', 'search', 'locate', 'need', 'want', 'looking for', 'pharmacy', 'store', 'available', 'price', 'buy', 'get']
+            # Keywords indicating informational queries about medicine (uses, effects, dosage, etc.)
+            info_keywords = ['used for', 'what is', 'what are', 'side effect', 'dosage', 'dose', 'precaution', 'benefit', 'risk', 'contraindication', 'how to take', 'when to take', 'how many', 'how much', 'is safe', 'help with', 'treat', 'treatment', 'work', 'works']
             
             is_question = any(indicator in message_lower for indicator in question_indicators)
+            is_info_query = any(keyword in message_lower for keyword in info_keywords)
             
             # If it's a question and we haven't answered it with FAQs, provide helpful response
-            if is_question and len(user_message.split()) > 2:
+            # BUT: Skip this if it's a medicine informational query (what is X used for, side effects, etc.)
+            if is_question and len(user_message.split()) > 2 and not any(keyword in message_lower for keyword in medicine_keywords) and not is_info_query:
                 bot_reply = "Thank you for asking! 😊<br><br>I'm here to help with:<br>• Finding medicines and pharmacies<br>• Prescription uploads<br>• General health information<br><br>However, I don't have specific information about your question right now. Please try:<br>• Rephrasing your question<br>• Asking about our services (type 'help')<br>• Searching for a medicine name<br><br>Or you can contact our support team for more assistance! 💁‍♀️"
                 if conversation:
                     conversation.add_message('bot', bot_reply)
@@ -542,15 +548,83 @@ def chatbot_response(request):
 
             # AUTO-DETECT MEDICINE SEARCH
             # Only search for medicine if it looks like a medicine query (not a question)
-            medicine_keywords = ['find', 'search', 'locate', 'need', 'want', 'looking for', 'pharmacy', 'store', 'available', 'price', 'buy', 'get']
-            is_medicine_query = any(keyword in message_lower for keyword in medicine_keywords) or (len(user_message.split()) <= 3 and not is_question)
+            # OR if it's an informational query about a medicine (what is X used for, side effects, etc.)
+            is_medicine_query = any(keyword in message_lower for keyword in medicine_keywords) or is_info_query or (len(user_message.split()) <= 3 and not is_question)
             
-            # Search for medicine in database
-            medicines = Medicine.objects.filter(
-                name__icontains=user_message
-            ) | Medicine.objects.filter(
-                generic_name__icontains=user_message
-            )
+            # Search for medicine in database (supports natural language like
+            # "find paracetamol near me" and fuzzy matches like brand names/typos).
+            medicines = Medicine.objects.none()
+            if is_medicine_query:
+                from rapidfuzz import process, fuzz
+
+                # Remove query filler words to isolate probable medicine terms.
+                noise_tokens = {
+                    'find', 'search', 'locate', 'need', 'want', 'looking', 'for', 'near', 'me',
+                    'pharmacy', 'pharmacies', 'store', 'available', 'price', 'buy', 'get', 'tablet',
+                    'tab', 'capsule', 'cap', 'syrup', 'cream', 'ointment', 'injection', 'please',
+                    'medicine', 'medicines', 'of', 'with', 'and', 'my', 'is', 'are'
+                }
+
+                cleaned_message = re.sub(r'[^a-zA-Z0-9\s\-\+]', ' ', user_message.lower())
+                tokens = [t for t in cleaned_message.split() if len(t) >= 3 and t not in noise_tokens]
+
+                # Build candidate phrases from the full message and token windows.
+                candidate_queries = [user_message.strip()]
+                if tokens:
+                    candidate_queries.append(' '.join(tokens))
+                    candidate_queries.extend(tokens)
+                    if len(tokens) >= 2:
+                        candidate_queries.extend([
+                            f"{tokens[i]} {tokens[i+1]}" for i in range(len(tokens) - 1)
+                        ])
+
+                # De-duplicate candidates while preserving order.
+                unique_candidates = []
+                seen_candidates = set()
+                for candidate in candidate_queries:
+                    normalized = candidate.strip().lower()
+                    if normalized and normalized not in seen_candidates:
+                        unique_candidates.append(candidate.strip())
+                        seen_candidates.add(normalized)
+
+                # Exact/contains matching first.
+                medicine_ids = set()
+                for candidate in unique_candidates:
+                    direct_matches = Medicine.objects.filter(
+                        Q(name__icontains=candidate) | Q(generic_name__icontains=candidate)
+                    ).values_list('id', flat=True)
+                    medicine_ids.update(direct_matches)
+
+                # Fuzzy fallback: compare each candidate with medicine/generic names.
+                if not medicine_ids:
+                    all_medicines = list(Medicine.objects.values('id', 'name', 'generic_name'))
+                    name_to_id = {}
+                    search_strings = []
+                    for med in all_medicines:
+                        med_name = (med.get('name') or '').strip()
+                        gen_name = (med.get('generic_name') or '').strip()
+                        if med_name:
+                            key = med_name.lower()
+                            name_to_id[key] = med['id']
+                            search_strings.append(key)
+                        if gen_name:
+                            key = gen_name.lower()
+                            name_to_id[key] = med['id']
+                            search_strings.append(key)
+
+                    for candidate in unique_candidates:
+                        matches = process.extract(
+                            candidate.lower(),
+                            search_strings,
+                            scorer=fuzz.WRatio,
+                            limit=5
+                        )
+                        for matched_name, score, _ in matches:
+                            if score >= 72:
+                                medicine_ids.add(name_to_id[matched_name])
+
+                if medicine_ids:
+                    medicines = Medicine.objects.filter(id__in=medicine_ids)
             
             if medicines.exists():
                 # Medicine found - search for pharmacies
@@ -596,10 +670,16 @@ def chatbot_response(request):
                 
                 # Calculate distances if user location provided
                 if user_lat and user_lon:
+                    user_lat = float(user_lat)
+                    user_lon = float(user_lon)
                     for pharmacy in pharmacy_list:
-                        dlat = math.radians(pharmacy['latitude'] - float(user_lat))
-                        dlon = math.radians(pharmacy['longitude'] - float(user_lon))
-                        a = math.sin(dlat/2)**2 + math.cos(math.radians(float(user_lat))) * math.cos(math.radians(pharmacy['latitude'])) * math.sin(dlon/2)**2
+                        if pharmacy['latitude'] is None or pharmacy['longitude'] is None:
+                            pharmacy['distance'] = None
+                            continue
+
+                        dlat = math.radians(pharmacy['latitude'] - user_lat)
+                        dlon = math.radians(pharmacy['longitude'] - user_lon)
+                        a = math.sin(dlat/2)**2 + math.cos(math.radians(user_lat)) * math.cos(math.radians(pharmacy['latitude'])) * math.sin(dlon/2)**2
                         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
                         distance = 6371 * c
                         pharmacy['distance'] = round(distance, 2)
@@ -608,7 +688,7 @@ def chatbot_response(request):
                     pharmacy_list.sort(key=lambda x: x.get('distance', float('inf')))
                 else:
                     # Sort by rating if no location
-                    pharmacy_list.sort(key=lambda x: x['rating'], reverse=True)
+                    pharmacy_list.sort(key=lambda x: x['rating'] if x['rating'] is not None else 0, reverse=True)
                 
                 # Save search to conversation
                 if conversation:
@@ -616,16 +696,31 @@ def chatbot_response(request):
                     conversation.add_message('bot', search_result)
                     conversation.save()
                 
+                # If this is an informational query, include medicine information
+                medicine_info_html = None
+                if is_info_query and medicine_list:
+                    # Try to get medicine info from knowledge base
+                    first_medicine = medicine_list[0]
+                    medicine_info = get_medicine_info(first_medicine['name']) or get_medicine_info(first_medicine['generic_name'])
+                    if medicine_info:
+                        medicine_info_html = format_medicine_info(medicine_info, first_medicine['name'])
+                
                 # Return medicine search results
-                return JsonResponse({
+                response_data = {
                     "type": "medicine_search",
                     "medicine_found": True,
                     "medicines": medicine_list,
                     "pharmacies": pharmacy_list[:15],  # Top 15 pharmacies
                     "total_pharmacies": len(pharmacy_list),
                     "has_location": bool(user_lat and user_lon),
+                    "is_info_query": is_info_query,
                     "session_id": session_id
-                })
+                }
+                
+                if medicine_info_html:
+                    response_data["medicine_info_html"] = medicine_info_html
+                
+                return JsonResponse(response_data)
             
             # No medicine found - provide helpful response
             if is_medicine_query:

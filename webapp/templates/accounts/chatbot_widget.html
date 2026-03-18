@@ -900,6 +900,14 @@
         <i class="fas fa-robot"></i>
       </div>
       <div class="message-content">
+    `;
+    
+    // If this is an informational query with medicine info, display it first
+    if (data.is_info_query && data.medicine_info_html) {
+      htmlContent += data.medicine_info_html;
+      htmlContent += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #e5e7eb;"><h4 style="color: #667eea; margin: 0 0 0.8rem 0; font-size: 0.95rem;">🏪 Find this medicine at pharmacies near you</h4>`;
+    } else {
+      htmlContent += `
         <div class="medicine-results-widget">
           <div class="results-header-widget">
             <h4><i class="fas fa-pills"></i> Found: ${medicineNames}</h4>
@@ -908,7 +916,8 @@
               ${data.has_location ? '<br><i class="fas fa-location-arrow"></i> By distance' : '<br><i class="fas fa-star"></i> By rating'}
             </div>
           </div>
-    `;
+      `;
+    }
     
     if (data.pharmacies && data.pharmacies.length > 0) {
       data.pharmacies.slice(0, 5).forEach(pharmacy => {
@@ -959,7 +968,14 @@
       `;
     }
     
-    htmlContent += `</div></div>`;
+    // Close the divs properly for info queries
+    if (data.is_info_query && data.medicine_info_html) {
+      htmlContent += `</div></div>`;
+    } else {
+      htmlContent += `</div></div>`;
+    }
+    
+    htmlContent += `</div>`;
     messageDiv.innerHTML = htmlContent;
     window.chatbotMessages.appendChild(messageDiv);
     window.chatbotMessages.scrollTop = window.chatbotMessages.scrollHeight;
